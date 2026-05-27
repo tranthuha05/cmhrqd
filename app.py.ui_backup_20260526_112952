@@ -1,0 +1,166 @@
+"""
+AIDEOM-VN — Mô hình ra quyết định kinh tế số Việt Nam
+App Streamlit tích hợp 12 mô hình học thuật
+"""
+
+import streamlit as st
+
+# ─── Page config (MUST be first Streamlit call) ──────────────────────────────
+st.set_page_config(
+    page_title="AIDEOM_VN Tran Thu Ha",
+    page_icon="🇻🇳",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# ─── Global CSS / Dark UI ────────────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap');
+html,body,[class*="css"]{font-family:'Inter',sans-serif;}
+.stApp{background:linear-gradient(135deg,#0A0E1A 0%,#0D1120 50%,#0A0E1A 100%);}
+.main .block-container{padding:1.5rem 2rem;max-width:1400px;}
+[data-testid="stSidebar"]{background:linear-gradient(180deg,#0D1120 0%,#111827 100%);border-right:1px solid rgba(0,212,255,.15);}
+.stRadio>div{gap:.25rem;}
+.stRadio>div>label{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:7px 12px;cursor:pointer;transition:all .2s;color:#94A3B8!important;font-size:.83rem;display:block;}
+.stRadio>div>label:hover{background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:#00D4FF!important;}
+[data-testid="metric-container"]{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:1rem;transition:all .2s;}
+[data-testid="metric-container"]:hover{border-color:rgba(0,212,255,.3);box-shadow:0 0 20px rgba(0,212,255,.08);}
+[data-testid="metric-container"] [data-testid="stMetricValue"]{color:#00D4FF!important;font-weight:700;}
+.stTabs [data-baseweb="tab-list"]{background:rgba(255,255,255,.03);border-radius:10px;padding:4px;gap:4px;border:1px solid rgba(255,255,255,.06);}
+.stTabs [data-baseweb="tab"]{border-radius:7px;color:#64748B;font-size:.84rem;font-weight:500;padding:7px 14px;}
+.stTabs [aria-selected="true"]{background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(99,102,241,.15));color:#00D4FF!important;border:1px solid rgba(0,212,255,.25);}
+[data-testid="stExpander"]{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);border-radius:10px;}
+.stButton>button{background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(99,102,241,.12));border:1px solid rgba(0,212,255,.35);border-radius:8px;color:#00D4FF;font-weight:600;transition:all .2s;}
+.stButton>button:hover{background:linear-gradient(135deg,rgba(0,212,255,.22),rgba(99,102,241,.22));box-shadow:0 0 20px rgba(0,212,255,.2);transform:translateY(-1px);}
+.math-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:.9rem 1.3rem;margin:.7rem 0;font-family:'JetBrains Mono',monospace;font-size:.83rem;color:#CBD5E1;line-height:1.9;}
+.ai-box{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(0,212,255,.05));border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:1.2rem 1.5rem;margin:1rem 0;}
+.hero-title{font-size:2.6rem;font-weight:800;background:linear-gradient(135deg,#00D4FF,#6366F1,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.4rem;}
+.hero-sub{color:#64748B;font-size:1.05rem;margin-bottom:1.5rem;}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:600;margin:2px;}
+.b-blue{background:rgba(0,212,255,.14);color:#00D4FF;border:1px solid rgba(0,212,255,.28);}
+.b-purple{background:rgba(99,102,241,.14);color:#818CF8;border:1px solid rgba(99,102,241,.28);}
+.b-green{background:rgba(16,185,129,.14);color:#34D399;border:1px solid rgba(16,185,129,.28);}
+.b-orange{background:rgba(245,158,11,.14);color:#FBBF24;border:1px solid rgba(245,158,11,.28);}
+.mod-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.1rem;transition:all .2s;height:100%;}
+.mod-card:hover{border-color:rgba(0,212,255,.28);background:rgba(0,212,255,.04);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,212,255,.07);}
+.mod-card h4{color:#E2E8F0;margin:4px 0;font-size:.9rem;}
+.mod-card p{color:#64748B;margin:0;font-size:.78rem;line-height:1.5;}
+.page-header{background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(99,102,241,.06));border:1px solid rgba(0,212,255,.15);border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.2rem;}
+.kpi-row{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+</style>
+""", unsafe_allow_html=True)
+
+import importlib
+
+# ─── Pages map ───────────────────────────────────────────────────────────────
+PAGES = {
+    "🏠 Trang chủ":                  "home",
+    "📈 Bài 1 — Cobb-Douglas + AI":  "bai01",
+    "💰 Bài 2 — LP Ngân sách số":    "bai02",
+    "🏭 Bài 3 — Priority 10 ngành":  "bai03",
+    "🗺️ Bài 4 — LP Ngành-Vùng":     "bai04",
+    "🎯 Bài 5 — MIP 15 dự án":      "bai05",
+    "🌍 Bài 6 — TOPSIS 6 vùng":     "bai06",
+    "⚡ Bài 7 — NSGA-II Pareto":    "bai07",
+    "📅 Bài 8 — Động 2026-2035":    "bai08",
+    "👷 Bài 9 — Lao động & AI":     "bai09",
+    "🎲 Bài 10 — Stochastic SP":    "bai10",
+    "🤖 Bài 11 — Q-learning RL":    "bai11",
+    "🇻🇳 Bài 12 — AIDEOM tích hợp": "bai12",
+}
+
+# ─── Sidebar ─────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("""
+    <div style="text-align:center;padding:1rem 0 1.5rem;">
+      <div style="font-size:2rem;">🇻🇳</div>
+      <div style="font-weight:800;font-size:1.1rem;color:#00D4FF;letter-spacing:1px;">AIDEOM_VN Tran Thu Ha</div>
+      <div style="font-size:.7rem;color:#475569;margin-top:.2rem;">Mô hình ra quyết định phát triển kinh tế số VN trong kỷ nguyên AI</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div style="color:#475569;font-size:.7rem;font-weight:600;letter-spacing:1px;margin-bottom:.4rem;">ĐIỀU HƯỚNG</div>', unsafe_allow_html=True)
+
+    page_key = st.radio("Nav", list(PAGES.keys()), label_visibility="collapsed", key="nav_radio")
+    page_id  = PAGES[page_key]
+
+    st.markdown("---")
+    st.markdown("""
+    <div style="padding:.8rem;background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.12);border-radius:8px;">
+      <div style="color:#00D4FF;font-size:.73rem;font-weight:600;margin-bottom:.3rem;">📊 Nguồn dữ liệu</div>
+      <div style="color:#64748B;font-size:.7rem;line-height:1.6;">NSO, MoST, MIC, MPI, WB, GII<br>Giai đoạn: 2020–2025 | Dự báo: 2030</div>
+    </div>
+    <div style="margin-top:.8rem;text-align:center;color:#1E293B;font-size:.68rem;">v2.0 — Interactive Academic Report</div>
+    """, unsafe_allow_html=True)
+
+# ─── Home ─────────────────────────────────────────────────────────────────────
+def show_home():
+    st.markdown('<div class="hero-title">AIDEOM_VN Tran Thu Ha Policy Lab</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-sub">12 mô hình ra quyết định kinh tế số — Báo cáo học thuật tương tác với AI Agent</div>', unsafe_allow_html=True)
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Mô hình", "12", "hoàn chỉnh")
+    c2.metric("GDP 2025", "12.847 nghìn tỷ", "+11,6%")
+    c3.metric("Kinh tế số/GDP", "19,5%", "+7,5pp")
+    c4.metric("AI Readiness", "75/100", "Đông Nam Bộ")
+    c5.metric("Mục tiêu 2030", "30%", "kinh tế số")
+
+    st.markdown("---")
+    st.markdown("### 🗂️ 12 Mô hình ra quyết định")
+
+    mods = [
+        ("01","📈","Cobb-Douglas + AI","Hàm sản xuất mở rộng D,AI,H. Phân rã tăng trưởng, dự báo 2030.","numpy/pandas"),
+        ("02","💰","LP Ngân sách số","Phân bổ 100.000 tỷ cho 4 hạng mục. Shadow price & phân tích độ nhạy.","linprog/PuLP"),
+        ("03","🏭","Priority 10 ngành","Chỉ số ưu tiên chuyển đổi số. 3 bộ trọng số chính sách.","MCDM"),
+        ("04","🗺️","LP Ngành-Vùng","50.000 tỷ × 6 vùng × 4 hạng mục. Ràng buộc công bằng lambda.","PuLP/CVXPY"),
+        ("05","🎯","MIP 15 dự án","Lựa chọn danh mục tối ưu. Ràng buộc nhị phân, loại trừ, tiên quyết.","MIP/PuLP"),
+        ("06","🌍","TOPSIS 6 vùng","Xếp hạng ưu tiên đầu tư AI. Trọng số chuyên gia, Entropy, AHP.","TOPSIS"),
+        ("07","⚡","NSGA-II Pareto","Tối ưu 4 mục tiêu: GDP, bao trùm, phát thải, an ninh.","pymoo"),
+        ("08","📅","Tối ưu động","Quỹ đạo K,D,AI,H tối ưu 2026–2035. Cú sốc, front-load vs spread.","SLSQP"),
+        ("09","👷","Lao động & AI","NetJob = New + Upgrade - Displaced. 8 ngành, nhóm dễ tổn thương.","CVXPY"),
+        ("10","🎲","Stochastic SP","Two-stage SP với 4 kịch bản. VSS, EVPI, Minimax Regret.","Pyomo"),
+        ("11","🤖","Q-learning RL","MDP 81 trạng thái × 5 hành động. Learning curve, policy extraction.","Gymnasium"),
+        ("12","🇻🇳","AIDEOM tích hợp","6 module M1-M6. AIDEOM Score, AI Policy Agent, cảnh báo rủi ro.","Full Stack"),
+    ]
+
+    for i in range(0, 12, 4):
+        cols = st.columns(4)
+        for col, (num, icon, title, desc, tech) in zip(cols, mods[i:i+4]):
+            with col:
+                st.markdown(f"""
+                <div class="mod-card">
+                  <div style="color:#00D4FF;font-weight:700;font-size:.72rem;">{icon} BÀI {num}</div>
+                  <h4>{title}</h4>
+                  <p>{desc}</p>
+                  <div style="margin-top:.5rem;"><span class="badge b-blue">{tech}</span></div>
+                </div>""", unsafe_allow_html=True)
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("### 📌 Hướng dẫn sử dụng")
+    a, b, c = st.columns(3)
+    a.info("**📋 Chọn bài** từ sidebar để đọc báo cáo học thuật đầy đủ với mô hình toán, dữ liệu, kết quả và biểu đồ.")
+    b.info("**🎛️ Tham số** có thể điều chỉnh bằng slider/selectbox để xem kết quả thay đổi tức thời.")
+    c.info("**🤖 AI Agent** trong mỗi bài phân tích kết quả và đưa ra khuyến nghị chính sách tự động.")
+
+
+# ─── Module loader ────────────────────────────────────────────────────────────
+def show_module(pid):
+    try:
+        mod = importlib.import_module(f"modules.{pid}")
+        mod.show()
+    except ModuleNotFoundError as e:
+        st.error(f"Chưa tìm thấy module `modules/{pid}.py`. Chi tiết: {e}")
+    except Exception as e:
+        import traceback
+        st.error(f"Lỗi trong module **{pid}**: `{e}`")
+        with st.expander("Chi tiết lỗi"):
+            st.code(traceback.format_exc())
+
+
+# ─── Router ───────────────────────────────────────────────────────────────────
+if page_id == "home":
+    show_home()
+else:
+    show_module(page_id)

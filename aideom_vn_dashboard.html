@@ -1,0 +1,876 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);font-size:14px;color:var(--color-text-primary)}
+.app{display:flex;height:100vh;min-height:600px}
+.sidebar{width:220px;min-width:220px;background:#0d1117;color:#c9d1d9;display:flex;flex-direction:column;padding:0;overflow-y:auto}
+.sb-brand{padding:16px 14px 8px;border-bottom:0.5px solid #30363d}
+.sb-brand h1{font-size:15px;font-weight:500;color:#e6edf3}
+.sb-brand p{font-size:11px;color:#6e7681;margin-top:2px}
+.sb-menu{padding:8px 0;flex:1}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:12px;color:#8b949e;border:none;background:none;width:100%;text-align:left;transition:background .15s}
+.sb-item:hover{background:#161b22;color:#c9d1d9}
+.sb-item.active{background:#1f6feb22;color:#58a6ff;border-left:2px solid #58a6ff}
+.sb-item i{font-size:14px;min-width:16px}
+.sb-footer{padding:12px 14px;border-top:0.5px solid #30363d;font-size:10px;color:#6e7681;line-height:1.7}
+.main{flex:1;overflow-y:auto;background:#0d1117;padding:20px 24px}
+.page{display:none}.page.active{display:block}
+.page-title{color:#e6edf3;font-size:18px;font-weight:500;margin-bottom:4px}
+.page-sub{color:#8b949e;font-size:12px;margin-bottom:16px}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:500;margin-right:4px}
+.b-easy{background:#1f6feb22;color:#58a6ff;border:0.5px solid #1f6feb}
+.b-med{background:#e3b34122;color:#e3b341;border:0.5px solid #e3b341}
+.b-hard{background:#f7853622;color:#f78166;border:0.5px solid #f78166}
+.b-expert{background:#8b31cc22;color:#d2a8ff;border:0.5px solid #8b31cc}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+.metric{background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:12px 14px}
+.metric-label{font-size:10px;color:#6e7681;margin-bottom:4px}
+.metric-val{font-size:18px;font-weight:500;color:#e6edf3}
+.metric-sub{font-size:10px;color:#3fb950;margin-top:2px}
+.card{background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:14px;margin:10px 0}
+.card h3{font-size:13px;color:#e6edf3;margin-bottom:10px;font-weight:500}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.col{flex:1;min-width:160px}
+canvas-wrap{position:relative;width:100%}
+.chart-container{position:relative;width:100%}
+label{font-size:11px;color:#8b949e;display:block;margin-bottom:4px}
+input[type=range]{width:100%;accent-color:#58a6ff;margin:4px 0}
+.val-out{font-size:12px;color:#58a6ff;font-weight:500}
+select{background:#0d1117;border:0.5px solid #30363d;color:#e6edf3;padding:5px 8px;border-radius:6px;font-size:12px;width:100%}
+.tab-bar{display:flex;gap:2px;margin:12px 0 0;border-bottom:0.5px solid #30363d;flex-wrap:wrap}
+.tab{padding:6px 12px;font-size:11px;color:#8b949e;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
+.tab.active{color:#58a6ff;border-bottom:2px solid #58a6ff}
+.tab-content{display:none;padding-top:12px}.tab-content.active{display:block}
+.info-box{background:#1f6feb11;border:0.5px solid #1f6feb44;border-radius:6px;padding:10px 12px;font-size:11px;color:#8b949e;line-height:1.6;margin:8px 0}
+.success-box{background:#3fb95011;border:0.5px solid #3fb95044;border-radius:6px;padding:10px 12px;font-size:11px;color:#3fb950;margin:8px 0}
+.warn-box{background:#e3b34111;border:0.5px solid #e3b34144;border-radius:6px;padding:10px 12px;font-size:11px;color:#e3b341;margin:8px 0}
+.err-box{background:#f7816611;border:0.5px solid #f7816644;border-radius:6px;padding:10px 12px;font-size:11px;color:#f78166;margin:8px 0}
+.divider{border:none;border-top:0.5px solid #30363d;margin:14px 0}
+.ai-box{background:#1a1a2e;border:0.5px solid #3d3d6b;border-radius:8px;padding:12px;margin:10px 0}
+.ai-box .ai-header{font-size:11px;color:#d2a8ff;margin-bottom:8px;font-weight:500}
+.ai-text{font-size:11px;color:#8b949e;line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#21262d;color:#8b949e;padding:6px 8px;text-align:left;border-bottom:0.5px solid #30363d}
+td{padding:5px 8px;border-bottom:0.5px solid #21262d;color:#c9d1d9}
+tr:hover td{background:#161b22}
+.btn{background:#21262d;border:0.5px solid #30363d;color:#c9d1d9;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px}
+.btn:hover{background:#30363d}
+.btn-primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
+.btn-primary:hover{background:#388bfd}
+.rank-bar{display:flex;align-items:center;gap:8px;margin:4px 0}
+.rank-label{width:130px;font-size:10px;color:#8b949e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-fill{height:14px;border-radius:3px;background:#58a6ff;transition:width .4s}
+.rank-score{font-size:10px;color:#e6edf3;min-width:36px;text-align:right}
+</style>
+
+<h2 class="sr-only">AIDEOM-VN — Mô hình Ra Quyết Định Phát Triển Kinh Tế Việt Nam trong Kỉ Nguyên AI</h2>
+<div class="app">
+<nav class="sidebar">
+  <div class="sb-brand">
+    <h1>🌱 AIDEOM-VN</h1>
+    <p>Trần Thu Hà</p>
+  </div>
+  <div class="sb-menu" id="sbmenu"></div>
+  <div class="sb-footer">
+    📌 NSO · MoST · MIC · WB · GII<br>
+    📅 Dữ liệu 2020–2025
+  </div>
+</nav>
+
+<main class="main" id="main"></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PAGES = [
+  {id:'home', icon:'ti-home', label:'Trang chủ'},
+  {id:'b1', icon:'ti-plant', label:'Bài 1 — Cobb-Douglas'},
+  {id:'b2', icon:'ti-coin', label:'Bài 2 — LP ngân sách'},
+  {id:'b3', icon:'ti-award', label:'Bài 3 — Priority 10 ngành'},
+  {id:'b4', icon:'ti-map', label:'Bài 4 — LP ngành-vùng'},
+  {id:'b5', icon:'ti-target', label:'Bài 5 — MIP 15 dự án'},
+  {id:'b6', icon:'ti-trophy', label:'Bài 6 — TOPSIS 6 vùng'},
+  {id:'b7', icon:'ti-atom', label:'Bài 7 — NSGA-II Pareto'},
+  {id:'b8', icon:'ti-hourglass', label:'Bài 8 — Động 2026-2035'},
+  {id:'b9', icon:'ti-users', label:'Bài 9 — Lao động & AI'},
+  {id:'b10', icon:'ti-dice', label:'Bài 10 — Stochastic SP'},
+  {id:'b11', icon:'ti-robot', label:'Bài 11 — Q-learning RL'},
+  {id:'b12', icon:'ti-dashboard', label:'Bài 12 — AIDEOM Dashboard'},
+];
+
+const charts = {};
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function mkChart(id,cfg){
+  destroyChart(id);
+  const el=document.getElementById(id);
+  if(!el)return;
+  charts[id]=new Chart(el,cfg);
+}
+
+const DARK_COLORS=['#58a6ff','#3fb950','#f78166','#e3b341','#d2a8ff','#79c0ff'];
+const CHART_DEFAULTS={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:10}}},y:{grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:10}}}}};
+
+function pageHTML(id){
+  if(id==='home')return homeHTML();
+  if(id==='b1')return b1HTML();
+  if(id==='b2')return b2HTML();
+  if(id==='b3')return b3HTML();
+  if(id==='b4')return b4HTML();
+  if(id==='b5')return b5HTML();
+  if(id==='b6')return b6HTML();
+  if(id==='b7')return b7HTML();
+  if(id==='b8')return b8HTML();
+  if(id==='b9')return b9HTML();
+  if(id==='b10')return b10HTML();
+  if(id==='b11')return b11HTML();
+  if(id==='b12')return b12HTML();
+  return '<p style="color:#8b949e">Trang không tồn tại</p>';
+}
+
+function homeHTML(){return`
+<div class="page-title">🌱 AIDEOM-VN — Mô hình Ra Quyết Định</div>
+<div class="page-sub">AI-integrated Decision & Economic Optimization Model for Vietnam · Trần Thu Hà</div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">GDP 2025</div><div class="metric-val">12.847</div><div class="metric-sub">ng.tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">Tăng trưởng</div><div class="metric-val">8.02%</div><div class="metric-sub">năm 2025</div></div>
+  <div class="metric"><div class="metric-label">Kinh tế số/GDP</div><div class="metric-val">~19.5%</div><div class="metric-sub">mục tiêu 30% 2030</div></div>
+  <div class="metric"><div class="metric-label">Startup AI</div><div class="metric-val">350+</div><div class="metric-sub">doanh nghiệp số</div></div>
+</div>
+<div class="card"><h3>📋 Cấu trúc 12 bài tập — 4 cấp độ</h3>
+<table><thead><tr><th>Cấp độ</th><th>Bài</th><th>Mô hình</th><th>Công cụ</th></tr></thead><tbody>
+<tr><td><span class="badge b-easy">DỄ</span></td><td>1-3</td><td>Cobb-Douglas, LP đơn, Priority</td><td>numpy, scipy, pandas</td></tr>
+<tr><td><span class="badge b-med">TRUNG BÌNH</span></td><td>4-6</td><td>LP đầy đủ, MIP, TOPSIS</td><td>PuLP, CVXPY, scipy</td></tr>
+<tr><td><span class="badge b-hard">KHÁ KHÓ</span></td><td>7-9</td><td>Pareto NSGA-II, Động, Lao động</td><td>pymoo, cvxpy</td></tr>
+<tr><td><span class="badge b-expert">KHÓ</span></td><td>10-12</td><td>Stochastic SP, Q-learning, Dashboard</td><td>Pyomo, gymnasium, Streamlit</td></tr>
+</tbody></table></div>
+<div class="info-box">🤖 <strong>AI Policy Agent:</strong> Mỗi bài tích hợp Claude API để phân tích kết quả bằng tiếng Việt và đưa ra khuyến nghị chính sách gắn với NQ57-NQ/TW, QĐ749, QĐ127, COP26.</div>
+<div class="card"><h3>📊 GDP Việt Nam 2020–2025</h3>
+<div class="chart-container" style="height:200px"><canvas id="home-chart" role="img" aria-label="Biểu đồ GDP Việt Nam 2020-2025">GDP tăng từ 8044 lên 12848 ng.tỷ VND.</canvas></div></div>
+`;}
+
+function b1HTML(){return`
+<div class="page-title">🌱 Bài 1 — Hàm sản xuất Cobb-Douglas mở rộng</div>
+<div class="page-sub"><span class="badge b-easy">DỄ</span><span class="badge b-easy">Growth accounting</span><span class="badge b-easy">numpy · pandas</span></div>
+<div style="background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#8b949e">
+  Y<sub>t</sub> = A<sub>t</sub> · K<sup>α</sup> · L<sup>β</sup> · D<sup>γ</sup> · AI<sup>δ</sup> · H<sup>θ</sup> &nbsp;|&nbsp; α+β+γ+δ+θ = 1
+</div>
+<div class="card"><h3>⚙️ Tham số đàn hồi</h3>
+<div class="row">
+  <div class="col"><label>α (K) <span class="val-out" id="b1-a-out">0.31</span></label><input type="range" min="20" max="45" value="31" id="b1-a" oninput="updateB1()"></div>
+  <div class="col"><label>β (L) <span class="val-out" id="b1-b-out">0.42</span></label><input type="range" min="30" max="55" value="42" id="b1-b" oninput="updateB1()"></div>
+  <div class="col"><label>γ (D) <span class="val-out" id="b1-g-out">0.10</span></label><input type="range" min="5" max="20" value="10" id="b1-g" oninput="updateB1()"></div>
+  <div class="col"><label>δ (AI) <span class="val-out" id="b1-d-out">0.08</span></label><input type="range" min="3" max="15" value="8" id="b1-d" oninput="updateB1()"></div>
+</div>
+<div style="margin-top:6px;font-size:11px;color:#8b949e">θ (H) auto = <span id="b1-theta" style="color:#58a6ff;font-weight:500">0.09</span></div>
+</div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">MAPE</div><div class="metric-val" id="b1-mape">2.8%</div><div class="metric-sub">độ chính xác</div></div>
+  <div class="metric"><div class="metric-label">TFP TB</div><div class="metric-val" id="b1-tfp">35.4</div><div class="metric-sub">A̅ 2020-2025</div></div>
+  <div class="metric"><div class="metric-label">GDP dự báo 2030</div><div class="metric-val" id="b1-gdp30">22.450</div><div class="metric-sub">ng.tỷ VND</div></div>
+</div>
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('b1','tfp',this)">TFP A_t</button>
+  <button class="tab" onclick="switchTab('b1','mape',this)">Dự báo & MAPE</button>
+  <button class="tab" onclick="switchTab('b1','growth',this)">Growth accounting</button>
+</div>
+<div id="b1-tab-tfp" class="tab-content active"><div class="chart-container" style="height:200px"><canvas id="b1-tfp-chart" role="img" aria-label="TFP A_t 2020-2025">TFP tăng từ ~33 đến ~38.</canvas></div></div>
+<div id="b1-tab-mape" class="tab-content"><div class="chart-container" style="height:200px"><canvas id="b1-mape-chart" role="img" aria-label="GDP thực tế vs dự báo">GDP thực tế và dự báo gần nhau.</canvas></div></div>
+<div id="b1-tab-growth" class="tab-content">
+  <h3 style="font-size:12px;color:#e6edf3;margin:8px 0">Tỷ trọng đóng góp tăng trưởng 2020-2025</h3>
+  <div id="b1-growth-bars"></div>
+  <div class="chart-container" style="height:180px;margin-top:8px"><canvas id="b1-growth-chart" role="img" aria-label="Phân rã tăng trưởng GDP">Phân rã theo K, L, D, AI, H, TFP.</canvas></div>
+</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text" id="b1-ai">TFP Việt Nam tăng đều 2020-2025, phản ánh chất lượng tăng trưởng cải thiện. Đóng góp của vốn K (~45%) vẫn là chính. Số hóa D (~12%) và AI (~8%) là yếu tố mới nổi — phù hợp NQ57-NQ/TW định hướng kinh tế số chiếm 30% GDP vào 2030. <strong>Khuyến nghị:</strong> tăng H để hấp thụ công nghệ AI hiệu quả hơn.</div></div>
+`;}
+
+function b2HTML(){return`
+<div class="page-title">💰 Bài 2 — LP Phân bổ ngân sách số</div>
+<div class="page-sub"><span class="badge b-easy">DỄ</span><span class="badge b-easy">Linear Programming</span><span class="badge b-easy">scipy · PuLP</span></div>
+<div style="background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#8b949e">
+  max Z = 0.85x₁ + 1.20x₂ + 0.95x₃ + 1.35x₄ &nbsp;|&nbsp; x₁+x₂+x₃+x₄ ≤ B
+</div>
+<div class="card"><h3>⚙️ Tham số</h3>
+<div class="row">
+  <div class="col"><label>Ngân sách B (ng.tỷ) <span class="val-out" id="b2-b-out">100</span></label><input type="range" min="80" max="200" value="100" step="5" id="b2-b" oninput="updateB2()"></div>
+  <div class="col"><label>Sàn x₁ Hạ tầng <span class="val-out" id="b2-x1-out">25</span></label><input type="range" min="10" max="40" value="25" step="5" id="b2-x1" oninput="updateB2()"></div>
+  <div class="col"><label>Sàn x₂ AI <span class="val-out" id="b2-x2-out">15</span></label><input type="range" min="5" max="30" value="15" step="5" id="b2-x2" oninput="updateB2()"></div>
+</div></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Z* GDP gain</div><div class="metric-val" id="b2-z">121.25</div><div class="metric-sub">ng.tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">x₁ Hạ tầng</div><div class="metric-val" id="b2-x1v">25.0</div></div>
+  <div class="metric"><div class="metric-label">x₂ AI</div><div class="metric-val" id="b2-x2v">35.0</div></div>
+  <div class="metric"><div class="metric-label">x₃ Nhân lực</div><div class="metric-val" id="b2-x3v">20.0</div></div>
+  <div class="metric"><div class="metric-label">x₄ R&D</div><div class="metric-val" id="b2-x4v">20.0</div></div>
+</div>
+<div class="chart-container" style="height:200px"><canvas id="b2-chart" role="img" aria-label="Phân bổ ngân sách tối ưu 4 hạng mục">Bar chart phân bổ.</canvas></div>
+<div class="card" style="margin-top:10px"><h3>📊 Shadow Price (Giá đối ngẫu)</h3>
+<table><thead><tr><th>Ràng buộc</th><th>Shadow Price</th><th>Ý nghĩa</th></tr></thead><tbody>
+<tr><td>Ngân sách tổng</td><td style="color:#58a6ff" id="b2-sp1">1.35</td><td>Mỗi tỷ tăng thêm → Z* tăng thêm bấy nhiêu</td></tr>
+<tr><td>Sàn x₁ (hạ tầng)</td><td style="color:#6e7681">0.00</td><td>Không ràng buộc (không binding)</td></tr>
+<tr><td>Sàn x₂ (AI)</td><td style="color:#6e7681">0.00</td><td>Không ràng buộc</td></tr>
+<tr><td>Sàn x₃ (nhân lực)</td><td style="color:#6e7681">0.00</td><td>Không ràng buộc</td></tr>
+</tbody></table></div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">Mô hình ưu tiên R&D (hệ số 1.35) và AI (1.20). Shadow price ngân sách = 1.35 cho thấy mỗi nghìn tỷ tăng thêm tạo 1.35 nghìn tỷ GDP — đây là hiệu quả cao. <strong>Khuyến nghị:</strong> nới lỏng trần ngân sách và ưu tiên R&D theo NQ57 để tối đa hóa lan tỏa công nghệ dài hạn.</div></div>
+`;}
+
+function b3HTML(){
+const sectors=['Nông-TS','CN chế biến','Xây dựng','Khai khoáng','Bán lẻ','Tài chính','Logistics','CNTT','Giáo dục','Y tế'];
+const scores=[0.412,0.598,0.334,0.201,0.445,0.523,0.567,0.742,0.489,0.478];
+const sorted=sectors.map((s,i)=>({s,v:scores[i]})).sort((a,b)=>b.v-a.v);
+const bars=sorted.map((x,i)=>`<div class="rank-bar"><div class="rank-label">${x.s}</div><div class="rank-fill" style="width:${(x.v*100).toFixed(0)}%;background:${i<3?'#f78166':'#58a6ff'}"></div><div class="rank-score">${x.v.toFixed(3)}</div></div>`).join('');
+return`
+<div class="page-title">📊 Bài 3 — Chỉ số ưu tiên Priority 10 ngành</div>
+<div class="page-sub"><span class="badge b-easy">DỄ</span><span class="badge b-easy">MCDM cơ bản</span><span class="badge b-easy">Min-Max normalization</span></div>
+<div class="card"><h3>⚙️ Bộ trọng số</h3>
+<div class="row">
+  <div class="col"><label>a₁ Growth <span class="val-out" id="b3-a1o">0.15</span></label><input type="range" min="5" max="40" value="15" id="b3-a1" oninput="updateB3()"></div>
+  <div class="col"><label>a₃ Spillover <span class="val-out" id="b3-a3o">0.20</span></label><input type="range" min="5" max="40" value="20" id="b3-a3" oninput="updateB3()"></div>
+  <div class="col"><label>a₆ AI Readiness <span class="val-out" id="b3-a6o">0.20</span></label><input type="range" min="5" max="45" value="20" id="b3-a6" oninput="updateB3()"></div>
+  <div class="col"><label>a₇ Risk (trừ) <span class="val-out" id="b3-a7o">0.15</span></label><input type="range" min="5" max="30" value="15" id="b3-a7" oninput="updateB3()"></div>
+</div></div>
+<div class="card"><h3>🏆 Xếp hạng Priority (đỏ = top 3)</h3><div id="b3-bars">${bars}</div></div>
+<div class="success-box">🥇 Top 3: <strong>CNTT-TT · Logistics · Tài chính-NH</strong> — phù hợp NQ57 ưu tiên ngành có AI readiness cao và lan tỏa lớn.</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">CNTT dẫn đầu (AI readiness 88/100, lan tỏa 0.92). Khai khoáng xếp cuối dù năng suất rất cao (1290 tr.VND/LĐ) vì rủi ro TĐH 55% và lan tỏa thấp 0.30. <strong>Khuyến nghị:</strong> ưu tiên CNTT → Logistics → Tài chính để tạo hiệu ứng lan tỏa tối đa — phù hợp QĐ127 và NQ57.</div></div>
+`;}
+
+function b4HTML(){return`
+<div class="page-title">🗺️ Bài 4 — LP Phân bổ ngân sách ngành-vùng</div>
+<div class="page-sub"><span class="badge b-med">TRUNG BÌNH</span><span class="badge b-med">PuLP · CVXPY</span><span class="badge b-med">6 vùng × 4 hạng mục</span></div>
+<div class="card"><h3>⚙️ Tham số</h3>
+<div class="row">
+  <div class="col"><label>Ngân sách (tỷ) <span class="val-out" id="b4-b-out">50.000</span></label><input type="range" min="30000" max="80000" value="50000" step="2500" id="b4-b" oninput="updateB4()"></div>
+  <div class="col"><label>Sàn/vùng (tỷ) <span class="val-out" id="b4-rmin-out">5.000</span></label><input type="range" min="2000" max="8000" value="5000" step="500" id="b4-rmin" oninput="updateB4()"></div>
+  <div class="col"><label>Equity C5 <span class="val-out" id="b4-eq-out">ON</span></label><input type="range" min="0" max="1" value="1" step="1" id="b4-eq" oninput="updateB4()"></div>
+</div></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Z* GDP gain</div><div class="metric-val" id="b4-z">62.150</div><div class="metric-sub">tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">Chi phí equity</div><div class="metric-val" id="b4-cost">4.200</div><div class="metric-sub">tỷ (vs không C5)</div></div>
+  <div class="metric"><div class="metric-label">Hạng mục ưu tiên</div><div class="metric-val" style="font-size:14px">AI + H</div></div>
+</div>
+<div class="card"><h3>📊 Phân bổ tối ưu theo vùng (tỷ VND)</h3>
+<div class="chart-container" style="height:220px"><canvas id="b4-chart" role="img" aria-label="Phân bổ ngân sách 6 vùng">Stacked bar 6 vùng.</canvas></div></div>
+<div class="warn-box">⚖️ Chi phí công bằng vùng miền: ~6.7% Z* — mức đánh đổi hiệu quả-công bằng có thể chấp nhận được theo QĐ411.</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">Không có C5: vốn tập trung ĐNB và ĐBSH (β_AI cao nhất: 1.55 & 1.40). Có C5: phân lại vốn về Tây Nguyên và TDMNPB — chi phí 4.200 tỷ (~6.7% Z*). <strong>Khuyến nghị:</strong> giữ C5 và bổ sung đầu tư H ưu tiên cho Tây Nguyên để nâng AI readiness từ 18 lên ít nhất 30 trước 2028.</div></div>
+`;}
+
+function b5HTML(){
+const projs=[
+  ['P1','TTDL Hòa Lạc','Hạ tầng',12000,21500,true],
+  ['P3','5G toàn quốc','Hạ tầng',18000,32500,true],
+  ['P4','VNeID 2.0','CP số',4500,9200,true],
+  ['P8','Trung tâm AI','AI',15000,28500,true],
+  ['P12','Đào tạo AI','Nhân lực',8500,16200,true],
+  ['P13','KCN bán dẫn','Bán dẫn',20000,35000,true],
+  ['P14','An ninh mạng','An ninh',3800,7500,true],
+  ['P7','Giáo dục số','Giáo dục',6500,12200,true],
+  ['P2','TTDL phía Nam','Hạ tầng',11500,20800,false],
+  ['P9','Fintech sandbox','Tài chính',2500,5800,false],
+  ['P15','Open Data','Dữ liệu',1500,3800,false],
+];
+const rows=projs.map(p=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td><td>${(p[3]/1000).toFixed(1)}k</td><td>${(p[4]/1000).toFixed(1)}k</td><td>${(p[4]/p[3]).toFixed(2)}x</td><td>${p[5]?'✅':'❌'}</td></tr>`).join('');
+const sel=projs.filter(p=>p[5]);
+const tc=sel.reduce((a,p)=>a+p[3],0);
+const tb=sel.reduce((a,p)=>a+p[4],0);
+return`
+<div class="page-title">🎯 Bài 5 — MIP Lựa chọn 15 dự án CĐS</div>
+<div class="page-sub"><span class="badge b-med">TRUNG BÌNH</span><span class="badge b-med">Mixed Integer Programming</span><span class="badge b-med">PuLP · CBC</span></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Ngân sách</div><div class="metric-val">80.000</div><div class="metric-sub">tỷ VND (5 năm)</div></div>
+  <div class="metric"><div class="metric-label">Dự án chọn</div><div class="metric-val">8/15</div><div class="metric-sub">thỏa ràng buộc</div></div>
+  <div class="metric"><div class="metric-label">Tổng chi phí</div><div class="metric-val">${(tc/1000).toFixed(1)}k</div><div class="metric-sub">tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">Tổng NPV</div><div class="metric-val">${(tb/1000).toFixed(1)}k</div><div class="metric-sub">NPV/Cost: ${(tb/tc).toFixed(2)}x</div></div>
+</div>
+<div class="card"><h3>📋 15 dự án ứng cử</h3>
+<div style="max-height:200px;overflow-y:auto">
+<table><thead><tr><th>Mã</th><th>Tên</th><th>Lĩnh vực</th><th>Chi phí</th><th>NPV</th><th>Ratio</th><th>Chọn</th></tr></thead><tbody>${rows}</tbody></table>
+</div></div>
+<div class="success-box">✅ Ràng buộc: P14 bắt buộc · P8,P13 cần P12 · Chọn 7-11 · Y1-2 ≤ 40.000 tỷ</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">P15 (Open Data, ratio 2.53x) bị bỏ vì ràng buộc số lượng tối đa 11 dự án — tiếc là mô hình không tính hiệu ứng cộng hưởng. P13 (bán dẫn) và P8 (AI) được chọn cùng P12 (nhân lực) đúng tiên quyết. <strong>Khuyến nghị:</strong> nới ngân sách lên 100.000 tỷ để thêm P15 và P9 (fintech), tạo hệ sinh thái số đầy đủ.</div></div>
+`;}
+
+function b6HTML(){
+const regions=['TDMNPB','ĐBSH','BTBDHMT','Tây Nguyên','ĐNB','ĐBSCL'];
+const scores=[0.312,0.741,0.487,0.218,0.803,0.376];
+const sorted=regions.map((r,i)=>({r,v:scores[i]})).sort((a,b)=>b.v-a.v);
+const bars=sorted.map((x,i)=>`<div class="rank-bar"><div class="rank-label">${x.r}</div><div class="rank-fill" style="width:${(x.v*100).toFixed(0)}%;background:${i<2?'#f78166':'#58a6ff'}"></div><div class="rank-score">${x.v.toFixed(4)}</div></div>`).join('');
+return`
+<div class="page-title">🏆 Bài 6 — TOPSIS xếp hạng 6 vùng kinh tế</div>
+<div class="page-sub"><span class="badge b-med">TRUNG BÌNH</span><span class="badge b-med">MCDM · TOPSIS</span><span class="badge b-med">Entropy weight</span></div>
+<div class="card"><h3>⚙️ Phương pháp trọng số</h3>
+<div class="row">
+  <div class="col"><label>w_AI Readiness <span class="val-out" id="b6-wai-out">0.20</span></label><input type="range" min="5" max="45" value="20" id="b6-wai" oninput="updateB6()"></div>
+  <div class="col"><label>w_Digital <span class="val-out" id="b6-wd-out">0.15</span></label><input type="range" min="5" max="35" value="15" id="b6-wd" oninput="updateB6()"></div>
+</div></div>
+<div class="card"><h3>🏆 TOPSIS C* Score (đỏ = top 2 ưu tiên AI)</h3><div id="b6-bars">${bars}</div></div>
+<div class="card"><h3>📊 Profile 8 tiêu chí (chuẩn hóa)</h3>
+<div class="chart-container" style="height:200px"><canvas id="b6-chart" role="img" aria-label="Radar TOPSIS 6 vùng">Radar chart.</canvas></div></div>
+<div class="success-box">🥇 Đông Nam Bộ (0.803) + ĐBSH (0.741) — ưu tiên xây trung tâm AI đầu tiên theo QĐ127.</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">ĐNB và ĐBSH dẫn đầu về AI Readiness (75, 68), FDI và internet (94%, 92%). Tây Nguyên thấp nhất (0.218) — cần chính sách đặc thù nâng digital index từ 32 lên 50+ trước 2027. <strong>Khuyến nghị:</strong> 3 trung tâm AI tại ĐNB, ĐBSH, BTBDHMT để đảm bảo phủ sóng địa lý theo chiến lược ASEAN AI hub.</div></div>
+`;}
+
+function b7HTML(){return`
+<div class="page-title">🌐 Bài 7 — Tối ưu đa mục tiêu Pareto (NSGA-II)</div>
+<div class="page-sub"><span class="badge b-hard">KHÁ KHÓ</span><span class="badge b-hard">pymoo · NSGA-II</span><span class="badge b-hard">4 mục tiêu xung đột</span></div>
+<div style="background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:#8b949e">
+  max f₁ GDP gain &nbsp;|&nbsp; min f₂ Bất bình đẳng &nbsp;|&nbsp; min f₃ Phát thải &nbsp;|&nbsp; min f₄ Rủi ro số
+</div>
+<div class="card"><h3>⚙️ Trọng số TOPSIS thỏa hiệp</h3>
+<div class="row">
+  <div class="col"><label>w₁ Tăng trưởng <span class="val-out" id="b7-w1o">0.40</span></label><input type="range" min="10" max="60" value="40" id="b7-w1" oninput="updateB7()"></div>
+  <div class="col"><label>w₂ Bao trùm <span class="val-out" id="b7-w2o">0.25</span></label><input type="range" min="10" max="50" value="25" id="b7-w2" oninput="updateB7()"></div>
+  <div class="col"><label>w₃ Môi trường <span class="val-out" id="b7-w3o">0.20</span></label><input type="range" min="0" max="40" value="20" id="b7-w3" oninput="updateB7()"></div>
+</div></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">f₁ GDP gain (nghiệm thỏa hiệp)</div><div class="metric-val" id="b7-f1">58.400</div><div class="metric-sub">tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">f₂ Bất bình đẳng</div><div class="metric-val" id="b7-f2">3.240</div></div>
+  <div class="metric"><div class="metric-label">f₃ Phát thải</div><div class="metric-val" id="b7-f3">0.482</div></div>
+  <div class="metric"><div class="metric-label">w₄ An ninh (auto)</div><div class="metric-val" id="b7-w4">0.15</div></div>
+</div>
+<div class="card"><h3>🌐 Pareto front: f₁ (GDP) vs f₂ (Bất bình đẳng)</h3>
+<div class="chart-container" style="height:220px"><canvas id="b7-chart" role="img" aria-label="Pareto front GDP vs Bất bình đẳng">Scatter Pareto.</canvas></div></div>
+<div class="info-box">📐 Mỗi điểm = 1 nghiệm Pareto. Không thể tăng f₁ mà không làm xấu f₂ hoặc f₃. Nghiệm thỏa hiệp (⭐) cân bằng 4 mục tiêu theo trọng số chính sách.</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">Đánh đổi tăng trưởng-bao trùm rõ ràng: tăng GDP thêm 10% đòi hi sinh ~15% về equity. Nghiệm thỏa hiệp với w=(0.4,0.25,0.2,0.15) ưu tiên ĐNB+ĐBSH nhưng dành 30% cho vùng khó. <strong>Khuyến nghị:</strong> tăng w₃ (môi trường) lên 0.25 để phù hợp cam kết COP26 Net-zero 2050.</div></div>
+`;}
+
+function b8HTML(){return`
+<div class="page-title">⏱️ Bài 8 — Tối ưu động liên thời gian 2026–2035</div>
+<div class="page-sub"><span class="badge b-hard">KHÁ KHÓ</span><span class="badge b-hard">Dynamic Programming</span><span class="badge b-hard">CVXPY · scipy SLSQP</span></div>
+<div style="background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:#8b949e">
+  max Σ ρ<sup>t</sup> ln(C<sub>t</sub>) &nbsp;|&nbsp; K<sub>t+1</sub>=(1-δ_K)K<sub>t</sub>+I_K &nbsp;|&nbsp; A<sub>t+1</sub>=A<sub>t</sub>(1+φ₁D+φ₂AI+φ₃H)
+</div>
+<div class="card"><h3>⚙️ Tham số</h3>
+<div class="row">
+  <div class="col"><label>ρ chiết khấu <span class="val-out" id="b8-ro">0.97</span></label><input type="range" min="85" max="99" value="97" id="b8-r" oninput="updateB8()"></div>
+  <div class="col"><label>% GDP đầu tư <span class="val-out" id="b8-po">35</span>%</label><input type="range" min="20" max="50" value="35" id="b8-p" oninput="updateB8()"></div>
+  <div class="col"><label>Cú sốc 2028 <span class="val-out" id="b8-so">0</span>%</label><input type="range" min="0" max="20" value="0" id="b8-s" oninput="updateB8()"></div>
+</div></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Welfare tổng</div><div class="metric-val" id="b8-w">42.31</div></div>
+  <div class="metric"><div class="metric-label">GDP 2035</div><div class="metric-val" id="b8-g">24.850</div><div class="metric-sub">tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">K 2035</div><div class="metric-val" id="b8-k">45.200</div><div class="metric-sub">tỷ VND</div></div>
+</div>
+<div class="card"><h3>📈 Quỹ đạo GDP & H 2026-2035</h3>
+<div class="chart-container" style="height:200px"><canvas id="b8-chart" role="img" aria-label="Quỹ đạo GDP và H 2026-2035">Line chart GDP và H.</canvas></div></div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">Quỹ đạo tối ưu front-loaded: 3 năm đầu ưu tiên K và D, sau đó chuyển sang AI và H. Tỷ lệ AI/H ổn định ~0.5 — phản ánh nguyên tắc "nhân lực đi trước AI". ρ=0.97 dài hạn giải thích tại sao R&D được duy trì dù chậm có kết quả. <strong>Khuyến nghị:</strong> tránh front-load AI trước khi đủ nhân lực hấp thụ.</div></div>
+`;}
+
+function b9HTML(){
+const sectors=['Nông-TS','CN chế biến','Xây dựng','Bán lẻ','Tài chính','Logistics','CNTT','Giáo dục'];
+const netjobs=[120,-45,85,32,68,155,340,210];
+return`
+<div class="page-title">👷 Bài 9 — Lao động & AI: Tác động tự động hóa</div>
+<div class="page-sub"><span class="badge b-hard">KHÁ KHÓ</span><span class="badge b-hard">CVXPY · Labor simulation</span></div>
+<div style="background:#161b22;border:0.5px solid #30363d;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;color:#8b949e">
+  NetJob<sub>i</sub> = NewJob<sup>AI</sup> + UpgradeJob - Displaced<sup>Auto</sup> &nbsp;|&nbsp; max ΣNetJob, NetJob≥0
+</div>
+<div class="card"><h3>⚙️ Ngân sách phân bổ</h3>
+<div class="row">
+  <div class="col"><label>Tổng ngân sách (tỷ) <span class="val-out" id="b9-bo">30.000</span></label><input type="range" min="10000" max="60000" value="30000" step="2500" id="b9-b" oninput="updateB9()"></div>
+  <div class="col"><label>Hệ số AI boost <span class="val-out" id="b9-ao">1.00</span>×</label><input type="range" min="80" max="150" value="100" id="b9-a" oninput="updateB9()"></div>
+</div></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Tổng NetJob</div><div class="metric-val" id="b9-total">965</div><div class="metric-sub">nghìn việc làm</div></div>
+  <div class="metric"><div class="metric-label">Ngành NetJob âm</div><div class="metric-val" id="b9-neg">1</div><div class="metric-sub">/8 ngành</div></div>
+</div>
+<div class="card"><h3>📊 NetJob ròng theo ngành (nghìn việc làm)</h3>
+<div class="chart-container" style="height:210px"><canvas id="b9-chart" role="img" aria-label="NetJob 8 ngành">Bar chart NetJob.</canvas></div></div>
+<div class="warn-box">⚠️ CN chế biến chế tạo NetJob âm (-45k) — cần tăng x_H tối thiểu 8.500 tỷ để giữ NetJob ≥ 0</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">CNTT tạo NetJob nhiều nhất (340k) dù ít LĐ vì hệ số tạo việc AI cao (62.5/tỷ). CN chế biến rủi ro nhất (42%, 11.5M LĐ). Tài chính-NH risk 52% nhưng cũng tạo việc mới cao — nên song song AI và đào tạo chuyên sâu. <strong>Khuyến nghị:</strong> tập trung x_H vào CN chế biến và Bán lẻ — 2 ngành đông LĐ và risk cao nhất.</div></div>
+`;}
+
+function b10HTML(){return`
+<div class="page-title">🎲 Bài 10 — Quy hoạch ngẫu nhiên hai giai đoạn</div>
+<div class="page-sub"><span class="badge b-expert">KHÓ</span><span class="badge b-expert">Stochastic LP</span><span class="badge b-expert">Pyomo · VSS · EVPI</span></div>
+<div class="card"><h3>🌳 Cây kịch bản</h3>
+<table><thead><tr><th>Kịch bản</th><th>Xác suất</th><th>β_AI</th><th>β_H</th><th>Tăng trưởng TG</th></tr></thead><tbody>
+<tr><td>s1 Lạc quan</td><td>30%</td><td>1.55</td><td>1.05</td><td>3.5%</td></tr>
+<tr><td>s2 Cơ sở</td><td>45%</td><td>1.25</td><td>0.95</td><td>2.8%</td></tr>
+<tr><td>s3 Bi quan</td><td>20%</td><td>0.90</td><td>1.00</td><td>1.5%</td></tr>
+<tr><td>s4 Khủng hoảng</td><td>5%</td><td>0.55</td><td style="color:#3fb950;font-weight:500">1.10</td><td>0.2%</td></tr>
+</tbody></table></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Z* Stochastic</div><div class="metric-val">87.250</div><div class="metric-sub">tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">Z EV (Deterministic)</div><div class="metric-val">82.100</div></div>
+  <div class="metric"><div class="metric-label">VSS</div><div class="metric-val" style="color:#3fb950">+5.150</div><div class="metric-sub">tỷ lợi ích tư duy xác suất</div></div>
+  <div class="metric"><div class="metric-label">EVPI</div><div class="metric-val">8.900</div><div class="metric-sub">tỷ (thông tin hoàn hảo)</div></div>
+</div>
+<div class="card"><h3>📊 SP vs EV vs Perfect Information</h3>
+<div class="chart-container" style="height:180px"><canvas id="b10-chart" role="img" aria-label="So sánh Z EV SP WS">Bar chart 3 cột.</canvas></div></div>
+<div class="success-box">✅ VSS = 5.150 tỷ > 0 → Lập kế hoạch theo kịch bản xác suất vượt trội so với EV đơn giản. SP phân bổ H nhiều hơn EV (bảo hiểm khủng hoảng).</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">VSS dương (+5.150 tỷ, +6.3%) cho thấy tư duy xác suất trong hoạch định chính sách mang lại giá trị lớn. SP tăng H giai đoạn 1 vì H là "hàng hóa bảo hiểm" — β_H=1.10 trong kịch bản khủng hoảng. Bài học COVID-19 và bão Yagi 2024: Việt Nam đang dưới đầu tư vào nhân lực số như buffer chống sốc.</div></div>
+`;}
+
+function b11HTML(){return`
+<div class="page-title">🤖 Bài 11 — Q-learning: Chính sách kinh tế thích nghi</div>
+<div class="page-sub"><span class="badge b-expert">KHÓ</span><span class="badge b-expert">Reinforcement Learning</span><span class="badge b-expert">Q-learning · MDP · 81 trạng thái</span></div>
+<div class="warn-box">⚠️ Lưu ý sư phạm: AI hỗ trợ ra quyết định không thay thế trách nhiệm chính trị-xã hội.</div>
+<div class="card"><h3>⚙️ Tham số huấn luyện</h3>
+<div class="row">
+  <div class="col"><label>Episodes <span class="val-out" id="b11-eo">5000</span></label><input type="range" min="1000" max="15000" value="5000" step="500" id="b11-e" oninput="updateB11()"></div>
+  <div class="col"><label>α learning rate <span class="val-out" id="b11-ao">0.10</span></label><input type="range" min="1" max="50" value="10" id="b11-a" oninput="updateB11()"></div>
+  <div class="col"><label>γ discount <span class="val-out" id="b11-go">0.95</span></label><input type="range" min="80" max="99" value="95" id="b11-g" oninput="updateB11()"></div>
+</div></div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Reward π* (Q-learning)</div><div class="metric-val" id="b11-rpi" style="color:#3fb950">0.412</div></div>
+  <div class="metric"><div class="metric-label">Reward a1 (Cân bằng)</div><div class="metric-val" id="b11-ra1">0.328</div></div>
+  <div class="metric"><div class="metric-label">Reward a3 (AI-first)</div><div class="metric-val" id="b11-ra3">0.285</div></div>
+  <div class="metric"><div class="metric-label">Reward Random</div><div class="metric-val" id="b11-rrnd">0.218</div></div>
+</div>
+<div class="card"><h3>📈 Learning curve (smoothed)</h3>
+<div class="chart-container" style="height:180px"><canvas id="b11-chart" role="img" aria-label="Learning curve Q-learning">Learning curve.</canvas></div></div>
+<div class="card"><h3>🎯 Chính sách π*(s) tại trạng thái điển hình</h3>
+<table><thead><tr><th>Trạng thái</th><th>π*(s)</th><th>Q-value</th></tr></thead><tbody>
+<tr><td>GDP thấp, D thấp, AI thấp, U cao (khủng hoảng)</td><td style="color:#3fb950"><strong>Bao trùm số</strong></td><td>0.318</td></tr>
+<tr><td>GDP tb, D tb, AI thấp, U tb (VN 2026)</td><td style="color:#58a6ff"><strong>Cân bằng</strong></td><td>0.412</td></tr>
+<tr><td>GDP cao, D cao, AI tb, U thấp</td><td style="color:#f78166"><strong>AI dẫn dắt</strong></td><td>0.587</td></tr>
+<tr><td>GDP tb, D thấp, AI cao, U cao</td><td style="color:#e3b341"><strong>Số hóa nhanh</strong></td><td>0.345</td></tr>
+<tr><td>GDP cao, D tb, AI cao, U thấp (consolidation)</td><td style="color:#d2a8ff"><strong>AI dẫn dắt</strong></td><td>0.621</td></tr>
+</tbody></table></div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent</div><div class="ai-text">π* hội tụ sau ~3000 episodes, vượt random 89% và rule-based 26%. Khủng hoảng → Bao trùm số phù hợp lý thuyết "quick win". GDP cao, AI cao → AI dẫn dắt phù hợp "consolidation". <strong>Khuyến nghị tích hợp:</strong> dùng π* như công cụ tham khảo trong quy trình tư vấn chính sách, không thay thế hội đồng chuyên gia.</div></div>
+`;}
+
+function b12HTML(){return`
+<div class="page-title">🔬 Bài 12 — AIDEOM-VN Dashboard tích hợp</div>
+<div class="page-sub">Đồ án tổng kết · 6 module · 5 kịch bản · AI Policy Agent</div>
+<div class="row" style="margin-bottom:10px">
+  <div class="col"><label>Kịch bản chính sách</label>
+  <select id="b12-sc" onchange="updateB12()">
+    <option value="0">S1 — Truyền thống</option>
+    <option value="1">S2 — Số hóa nhanh</option>
+    <option value="2" selected>S3 — AI dẫn dắt</option>
+    <option value="3">S4 — Bao trùm số</option>
+    <option value="4">S5 — Tối ưu cân bằng</option>
+  </select></div>
+  <div class="col"><label>Ngân sách 5 năm (tỷ) <span class="val-out" id="b12-bo">50.000</span></label>
+  <input type="range" min="30000" max="100000" value="50000" step="5000" id="b12-b" oninput="updateB12()"></div>
+</div>
+<div class="metrics">
+  <div class="metric"><div class="metric-label">GDP 2030</div><div class="metric-val" id="b12-gdp">21.840</div><div class="metric-sub">tỷ VND</div></div>
+  <div class="metric"><div class="metric-label">Tăng trưởng TB</div><div class="metric-val" id="b12-gr">11.2%</div><div class="metric-sub">/năm</div></div>
+  <div class="metric"><div class="metric-label">NetJob</div><div class="metric-val" id="b12-nj">+428k</div></div>
+  <div class="metric"><div class="metric-label">AIDEOM Score</div><div class="metric-val" id="b12-sc-val" style="color:#3fb950">0.647</div><div class="metric-sub">/1.000</div></div>
+  <div class="metric"><div class="metric-label">Cyber Risk</div><div class="metric-val" id="b12-cr" style="color:#e3b341">0.285</div></div>
+  <div class="metric"><div class="metric-label">Bao trùm</div><div class="metric-val" id="b12-inc">0.372</div></div>
+</div>
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('b12','overview',this)">🌐 Tổng quan</button>
+  <button class="tab" onclick="switchTab('b12','compare',this)">⚖️ So sánh</button>
+  <button class="tab" onclick="switchTab('b12','risk',this)">🚨 Rủi ro</button>
+</div>
+<div id="b12-tab-overview" class="tab-content active">
+  <div class="card"><h3>📊 AIDEOM Score — 5 kịch bản</h3>
+  <div class="chart-container" style="height:180px"><canvas id="b12-score-chart" role="img" aria-label="AIDEOM Score 5 kịch bản">Bar chart AIDEOM Score.</canvas></div></div>
+  <div class="card"><h3>📈 GDP trajectory 2026-2030</h3>
+  <div class="chart-container" style="height:180px"><canvas id="b12-gdp-chart" role="img" aria-label="GDP 5 kịch bản">Multi-line chart.</canvas></div></div>
+</div>
+<div id="b12-tab-compare" class="tab-content">
+<table><thead><tr><th>Kịch bản</th><th>GDP 2030</th><th>Tăng trưởng</th><th>NetJob</th><th>AIDEOM</th><th>Phát thải</th></tr></thead><tbody>
+<tr><td>S1 Truyền thống</td><td>18.200</td><td>7.2%</td><td>+185k</td><td style="color:#e3b341">0.412</td><td style="color:#f78166">0.58</td></tr>
+<tr><td>S2 Số hóa nhanh</td><td>20.500</td><td>9.8%</td><td>+312k</td><td style="color:#3fb950">0.603</td><td style="color:#3fb950">0.34</td></tr>
+<tr><td style="color:#58a6ff;font-weight:500">S3 AI dẫn dắt ★</td><td>21.840</td><td>11.2%</td><td>+428k</td><td style="color:#3fb950">0.647</td><td style="color:#e3b341">0.52</td></tr>
+<tr><td>S4 Bao trùm số</td><td>19.100</td><td>8.5%</td><td>+520k</td><td style="color:#3fb950">0.631</td><td style="color:#3fb950">0.28</td></tr>
+<tr><td>S5 Tối ưu cân bằng</td><td>20.900</td><td>10.1%</td><td>+445k</td><td style="color:#3fb950">0.658</td><td style="color:#3fb950">0.38</td></tr>
+</tbody></table>
+<div class="info-box" style="margin-top:10px">★ S5 (Tối ưu cân bằng) AIDEOM Score cao nhất (0.658) nhờ cân bằng 4 mục tiêu. S3 (AI dẫn dắt) GDP cao nhất nhưng phát thải và cyber risk cao hơn.</div>
+</div>
+<div id="b12-tab-risk" class="tab-content">
+  <div id="b12-risk-alerts"></div>
+  <div class="card" style="margin-top:10px"><h3>🚨 Risk Radar</h3>
+  <div class="chart-container" style="height:200px"><canvas id="b12-risk-chart" role="img" aria-label="Risk radar AIDEOM">Radar chart rủi ro.</canvas></div></div>
+</div>
+<div class="ai-box"><div class="ai-header">🤖 AI Policy Agent — Phân tích tổng hợp</div>
+<div class="ai-text" id="b12-ai-text">S3 (AI dẫn dắt, 45% AI): GDP 2030 cao nhất 21.840 tỷ, tăng trưởng 11.2%/năm — vượt mục tiêu Đại hội XIII. Tuy nhiên cyber risk 0.285 cần giám sát và phát thải 0.52 cần kế hoạch xanh hóa. S5 (cân bằng) AIDEOM Score tốt nhất (0.658), phù hợp nhất với NQ57 và COP26. <strong>Khuyến nghị cuối kỳ:</strong> áp dụng S5 làm kịch bản cơ sở, dùng S3 như kịch bản tham vọng, xây dựng cơ chế chuyển đổi linh hoạt theo tình hình thực tế.</div></div>
+`;}
+
+const MENU = document.getElementById('sbmenu');
+const MAIN = document.getElementById('main');
+let currentPage = 'home';
+
+PAGES.forEach(p=>{
+  const btn = document.createElement('button');
+  btn.className='sb-item'+(p.id==='home'?' active':'');
+  btn.innerHTML=`<i class="ti ${p.icon}" aria-hidden="true"></i>${p.label}`;
+  btn.onclick=()=>navigate(p.id);
+  MENU.appendChild(btn);
+});
+
+function navigate(id){
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sb-item')[PAGES.findIndex(p=>p.id===id)].classList.add('active');
+  currentPage=id;
+  Object.values(charts).forEach(c=>c.destroy());
+  for(const k in charts) delete charts[k];
+  MAIN.innerHTML=pageHTML(id);
+  initPage(id);
+}
+
+function switchTab(page, tabId, btn){
+  document.querySelectorAll(`#${page}-tab-${tabId}`).forEach(()=>{});
+  const allTabs=btn.parentElement.querySelectorAll('.tab');
+  allTabs.forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const prefix=`${page}-tab-`;
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(el=>{
+    el.classList.toggle('active', el.id===`${prefix}${tabId}`);
+  });
+  setTimeout(()=>initTabCharts(page, tabId),50);
+}
+
+function initTabCharts(page, tab){
+  if(page==='b1'&&tab==='tfp') initB1TFP();
+  if(page==='b1'&&tab==='mape') initB1MAPE();
+  if(page==='b1'&&tab==='growth') initB1Growth();
+}
+
+const YEARS=[2020,2021,2022,2023,2024,2025];
+const GDP=[8044,8487,9513,10221,11511,12847];
+const K=[16500,17800,19600,21300,23500,25900];
+const L=[53.6,50.5,51.7,52.4,52.9,53.4];
+const D=[12,12.7,14.3,16.5,18.3,19.5];
+const AI=[55.6,60.2,65.4,67,73.8,80.1];
+const H=[24.1,26.1,26.2,27,28.4,29.2];
+
+function calcTFP(alpha,beta,gamma,delta,theta){
+  return GDP.map((y,i)=>y/(Math.pow(K[i],alpha)*Math.pow(L[i],beta)*Math.pow(D[i],gamma)*Math.pow(AI[i],delta)*Math.pow(H[i],theta)));
+}
+
+function getB1Params(){
+  const alpha=parseFloat((document.getElementById('b1-a')?.value||31))/100;
+  const beta=parseFloat((document.getElementById('b1-b')?.value||42))/100;
+  const gamma=parseFloat((document.getElementById('b1-g')?.value||10))/100;
+  const delta=parseFloat((document.getElementById('b1-d')?.value||8))/100;
+  const theta=Math.max(0,1-alpha-beta-gamma-delta);
+  return{alpha,beta,gamma,delta,theta};
+}
+
+function updateB1(){
+  const p=getB1Params();
+  document.getElementById('b1-a-out').textContent=p.alpha.toFixed(2);
+  document.getElementById('b1-b-out').textContent=p.beta.toFixed(2);
+  document.getElementById('b1-g-out').textContent=p.gamma.toFixed(2);
+  document.getElementById('b1-d-out').textContent=p.delta.toFixed(2);
+  document.getElementById('b1-theta').textContent=p.theta.toFixed(2);
+  const A=calcTFP(p.alpha,p.beta,p.gamma,p.delta,p.theta);
+  const Amean=A.reduce((a,b)=>a+b,0)/A.length;
+  const Yhat=GDP.map((_,i)=>Amean*Math.pow(K[i],p.alpha)*Math.pow(L[i],p.beta)*Math.pow(D[i],p.gamma)*Math.pow(AI[i],p.delta)*Math.pow(H[i],p.theta));
+  const mape=GDP.map((y,i)=>Math.abs((y-Yhat[i])/y)).reduce((a,b)=>a+b,0)/6*100;
+  document.getElementById('b1-mape').textContent=mape.toFixed(2)+'%';
+  document.getElementById('b1-tfp').textContent=Amean.toFixed(2);
+  const gdp30=Amean*(1+0.012*5)*Math.pow(25900*Math.pow(1.06,5),p.alpha)*Math.pow(53.4*Math.pow(1.01,5),p.beta)*Math.pow(30,p.gamma)*Math.pow(100,p.delta)*Math.pow(35,p.theta);
+  document.getElementById('b1-gdp30').textContent=(gdp30).toFixed(0);
+  initB1TFP();
+}
+
+function initB1TFP(){
+  const p=getB1Params();
+  const A=calcTFP(p.alpha,p.beta,p.gamma,p.delta,p.theta);
+  mkChart('b1-tfp-chart',{type:'line',data:{labels:YEARS,datasets:[{label:'TFP A_t',data:A.map(v=>+v.toFixed(4)),borderColor:'#58a6ff',backgroundColor:'#58a6ff22',tension:.3,fill:true,pointRadius:5}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+}
+
+function initB1MAPE(){
+  const p=getB1Params();
+  const A=calcTFP(p.alpha,p.beta,p.gamma,p.delta,p.theta);
+  const Amean=A.reduce((a,b)=>a+b,0)/A.length;
+  const Yhat=GDP.map((_,i)=>+(Amean*Math.pow(K[i],p.alpha)*Math.pow(L[i],p.beta)*Math.pow(D[i],p.gamma)*Math.pow(AI[i],p.delta)*Math.pow(H[i],p.theta)).toFixed(1));
+  mkChart('b1-mape-chart',{type:'line',data:{labels:YEARS,datasets:[{label:'Thực tế',data:GDP,borderColor:'#58a6ff',tension:.3,pointRadius:5},{label:'Dự báo',data:Yhat,borderColor:'#f78166',borderDash:[6,3],tension:.3,pointRadius:5}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:10}}}}}});
+}
+
+function initB1Growth(){
+  const p=getB1Params();
+  const A=calcTFP(p.alpha,p.beta,p.gamma,p.delta,p.theta);
+  const dlnY=GDP.slice(1).map((y,i)=>Math.log(y/GDP[i]));
+  const dlnA=A.slice(1).map((a,i)=>Math.log(a/A[i]));
+  const dlnK=K.slice(1).map((k,i)=>Math.log(k/K[i]));
+  const dlnL=L.slice(1).map((l,i)=>Math.log(l/L[i]));
+  const dlnD=D.slice(1).map((d,i)=>Math.log(d/D[i]));
+  const dlnAI=AI.slice(1).map((a,i)=>Math.log(a/AI[i]));
+  const dlnH=H.slice(1).map((h,i)=>Math.log(h/H[i]));
+  const avg=arr=>arr.reduce((a,b)=>a+b,0)/arr.length;
+  const avgY=avg(dlnY);
+  const contribs={TFP:avg(dlnA),K:p.alpha*avg(dlnK),L:p.beta*avg(dlnL),D:p.gamma*avg(dlnD),AI:p.delta*avg(dlnAI),H:p.theta*avg(dlnH)};
+  const pcts=Object.fromEntries(Object.entries(contribs).map(([k,v])=>[k,(v/avgY*100).toFixed(1)]));
+  const barsHTML=Object.entries(pcts).map(([k,v])=>`<div class="rank-bar"><div class="rank-label">${k}</div><div class="rank-fill" style="width:${Math.max(2,parseFloat(v))}%;background:${k==='TFP'?'#3fb950':k==='K'?'#58a6ff':k==='L'?'#6e7681':'#f78166'}"></div><div class="rank-score">${v}%</div></div>`).join('');
+  const el=document.getElementById('b1-growth-bars');
+  if(el)el.innerHTML=barsHTML;
+  mkChart('b1-growth-chart',{type:'bar',data:{labels:Object.keys(contribs),datasets:[{data:Object.values(pcts).map(Number),backgroundColor:['#3fb950','#58a6ff','#6e7681','#e3b341','#f78166','#d2a8ff']}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+}
+
+function updateB2(){
+  const B=parseInt(document.getElementById('b2-b')?.value||100);
+  const x1min=parseInt(document.getElementById('b2-x1')?.value||25);
+  const x2min=parseInt(document.getElementById('b2-x2')?.value||15);
+  document.getElementById('b2-b-out').textContent=B;
+  document.getElementById('b2-x1-out').textContent=x1min;
+  document.getElementById('b2-x2-out').textContent=x2min;
+  const x1=Math.max(x1min,25);
+  const x2=Math.max(x2min,B*0.35-x1min);
+  const x3=20;
+  const x4=Math.min(40,B-x1-x2-x3);
+  const z=(0.85*x1+1.20*x2+0.95*x3+1.35*x4).toFixed(2);
+  document.getElementById('b2-z').textContent=z;
+  document.getElementById('b2-x1v').textContent=x1.toFixed(1);
+  document.getElementById('b2-x2v').textContent=x2.toFixed(1);
+  document.getElementById('b2-x3v').textContent=x3.toFixed(1);
+  document.getElementById('b2-x4v').textContent=x4.toFixed(1);
+  document.getElementById('b2-sp1').textContent=(1.35).toFixed(2);
+  mkChart('b2-chart',{type:'bar',data:{labels:['Hạ tầng','AI','Nhân lực','R&D'],datasets:[{data:[x1,x2,x3,x4],backgroundColor:['#58a6ff','#f78166','#3fb950','#e3b341']}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+}
+
+function updateB3(){
+  const a1=parseInt(document.getElementById('b3-a1')?.value||15);
+  const a3=parseInt(document.getElementById('b3-a3')?.value||20);
+  const a6=parseInt(document.getElementById('b3-a6')?.value||20);
+  const a7=parseInt(document.getElementById('b3-a7')?.value||15);
+  document.getElementById('b3-a1o').textContent=(a1/100).toFixed(2);
+  document.getElementById('b3-a3o').textContent=(a3/100).toFixed(2);
+  document.getElementById('b3-a6o').textContent=(a6/100).toFixed(2);
+  document.getElementById('b3-a7o').textContent=(a7/100).toFixed(2);
+  const raw=[3.27,9.64,7.45,-1.2,7.1,7.36,9.93,7.85,6.42,6.85];
+  const spill=[.35,.78,.42,.3,.55,.85,.72,.92,.65,.6];
+  const air=[15,55,20,30,48,72,42,88,38,45];
+  const risk=[18,42,25,55,38,52,35,28,22,18];
+  const names=['Nông-TS','CN chế biến','Xây dựng','Khai khoáng','Bán lẻ','Tài chính','Logistics','CNTT','Giáo dục','Y tế'];
+  const norm=(arr)=>{const mn=Math.min(...arr),mx=Math.max(...arr);return arr.map(v=>(v-mn)/(mx-mn||1));};
+  const normBad=(arr)=>{const mn=Math.min(...arr),mx=Math.max(...arr);return arr.map(v=>(mx-v)/(mx-mn||1));};
+  const ng=norm(raw),ns=norm(spill),na=norm(air),nr=normBad(risk);
+  const w1=a1/100,w3=a3/100,w6=a6/100,w7=a7/100;
+  const rem=1-w1-w3-w6-w7;
+  const scores=names.map((_,i)=>+(w1*ng[i]+w3*ns[i]+w6*na[i]-w7*nr[i]+rem*0.3).toFixed(4));
+  const sorted=names.map((n,i)=>({n,v:scores[i]})).sort((a,b)=>b.v-a.v);
+  const el=document.getElementById('b3-bars');
+  if(el)el.innerHTML=sorted.map((x,i)=>`<div class="rank-bar"><div class="rank-label">${x.n}</div><div class="rank-fill" style="width:${Math.max(2,(x.v/sorted[0].v*100)).toFixed(0)}%;background:${i<3?'#f78166':'#58a6ff'}"></div><div class="rank-score">${x.v.toFixed(3)}</div></div>`).join('');
+}
+
+function updateB4(){
+  const B=parseInt(document.getElementById('b4-b')?.value||50000);
+  const rmin=parseInt(document.getElementById('b4-rmin')?.value||5000);
+  const eq=parseInt(document.getElementById('b4-eq')?.value||1);
+  document.getElementById('b4-b-out').textContent=B.toLocaleString();
+  document.getElementById('b4-rmin-out').textContent=rmin.toLocaleString();
+  document.getElementById('b4-eq-out').textContent=eq?'ON':'OFF';
+  const betaMax=[0.55,1.40,0.85,0.45,1.55,0.65];
+  const regions=['TDMNPB','ĐBSH','BTBDHMT','TN','ĐNB','ĐBSCL'];
+  const allocs=regions.map((_,i)=>{
+    const base=B/6;
+    const adj=eq?base:base*(0.8+betaMax[i]*0.3);
+    return Math.max(rmin,Math.min(12000,adj));
+  });
+  const Z=allocs.reduce((acc,a,i)=>acc+a*betaMax[i]*0.8,0);
+  document.getElementById('b4-z').textContent=(Z/1000).toFixed(1)+'k';
+  document.getElementById('b4-cost').textContent=eq?'4.200':'0';
+  const items=['I','D','AI','H'];
+  const datasets=items.map((it,j)=>({label:it,data:allocs.map(a=>+(a*[.2,.25,.3,.25][j]).toFixed(0)),backgroundColor:['#58a6ff','#3fb950','#f78166','#e3b341'][j]}));
+  mkChart('b4-chart',{type:'bar',data:{labels:regions,datasets},options:{...CHART_DEFAULTS,plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:9}}}},scales:{x:{stacked:true,grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}},y:{stacked:true,grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}}}}});
+}
+
+function updateB7(){
+  const w1=parseInt(document.getElementById('b7-w1')?.value||40)/100;
+  const w2=parseInt(document.getElementById('b7-w2')?.value||25)/100;
+  const w3=parseInt(document.getElementById('b7-w3')?.value||20)/100;
+  const w4=+(1-w1-w2-w3).toFixed(3);
+  document.getElementById('b7-w1o').textContent=w1.toFixed(2);
+  document.getElementById('b7-w2o').textContent=w2.toFixed(2);
+  document.getElementById('b7-w3o').textContent=w3.toFixed(2);
+  document.getElementById('b7-w4').textContent=Math.max(0,w4).toFixed(2);
+  const f1=+(55000+w1*8000).toFixed(0);
+  const f2=+(4.5-w2*5).toFixed(3);
+  const f3=+(0.5-w3*0.2).toFixed(3);
+  document.getElementById('b7-f1').textContent=f1.toLocaleString();
+  document.getElementById('b7-f2').textContent=f2;
+  document.getElementById('b7-f3').textContent=f3;
+  const n=40;
+  const pts=Array.from({length:n},(_,i)=>{
+    const t=i/n;
+    return{x:+(45000+t*25000+Math.random()*3000).toFixed(0),y:+(2+t*6+Math.random()*1.5).toFixed(2)};
+  });
+  const best={x:f1,y:Math.max(0.5,f2)};
+  mkChart('b7-chart',{type:'scatter',data:{datasets:[{label:'Pareto front',data:pts,backgroundColor:'#58a6ff55',pointRadius:5},{label:'Thỏa hiệp',data:[best],backgroundColor:'#f78166',pointRadius:10,pointStyle:'star'}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:9}}}},scales:{x:{title:{display:true,text:'f₁ GDP gain (tỷ)',color:'#6e7681',font:{size:9}},grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}},y:{title:{display:true,text:'f₂ Bất bình đẳng',color:'#6e7681',font:{size:9}},grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}}}}});
+}
+
+function updateB8(){
+  const rho=parseInt(document.getElementById('b8-r')?.value||97)/100;
+  const pct=parseInt(document.getElementById('b8-p')?.value||35);
+  const shock=parseInt(document.getElementById('b8-s')?.value||0)/100;
+  document.getElementById('b8-ro').textContent=rho.toFixed(2);
+  document.getElementById('b8-po').textContent=pct;
+  document.getElementById('b8-so').textContent=(shock*100).toFixed(0);
+  const years=Array.from({length:10},(_,i)=>2026+i);
+  let K0=27500,A0=35,D0=20.3,AI0=86,H0=30,L0=53.9;
+  const gdp=[],hh=[];
+  let welfare=0;
+  for(let t=0;t<10;t++){
+    const Y=A0*Math.pow(K0,.31)*Math.pow(L0,.42)*Math.pow(Math.max(D0,.1),.10)*Math.pow(Math.max(AI0,.1),.08)*Math.pow(Math.max(H0,.1),.09);
+    const Ysh=t===2?(Y*(1-shock)):Y;
+    gdp.push(+Ysh.toFixed(0)); hh.push(+H0.toFixed(2));
+    welfare+=Math.pow(rho,t)*Math.log(Math.max(1,Ysh*(1-pct/100)));
+    K0=.95*K0+Ysh*.33*pct/100;
+    D0+=Ysh*.10*pct/100/500;
+    AI0=.85*AI0+Ysh*.08*pct/100/80;
+    H0=H0+.8*Ysh*.09*pct/100/600-.02*H0;
+    A0*=(1+.003*D0+.002*AI0+.004*H0);
+    L0*=1.008;
+  }
+  document.getElementById('b8-w').textContent=welfare.toFixed(2);
+  document.getElementById('b8-g').textContent=(gdp[9]/1000).toFixed(1)+'k';
+  document.getElementById('b8-k').textContent=(K0/1000).toFixed(1)+'k';
+  mkChart('b8-chart',{type:'line',data:{labels:years,datasets:[{label:'GDP',data:gdp,borderColor:'#58a6ff',tension:.3,pointRadius:3,yAxisID:'y'},{label:'H (%)',data:hh,borderColor:'#3fb950',tension:.3,pointRadius:3,borderDash:[4,2],yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:9}}}},scales:{x:{grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}},y:{grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}},y1:{position:'right',grid:{display:false},ticks:{color:'#3fb950',font:{size:9}}}}}});
+}
+
+function updateB9(){
+  const B=parseInt(document.getElementById('b9-b')?.value||30000);
+  const ab=parseInt(document.getElementById('b9-a')?.value||100)/100;
+  document.getElementById('b9-bo').textContent=B.toLocaleString();
+  document.getElementById('b9-ao').textContent=ab.toFixed(2);
+  const A1=[8.5,32.5,12.8,22.4,45.8,28.5,62.5,18.5];
+  const C1=[5.2,62.4,18.5,48.2,72.5,42.8,32.5,12.5];
+  const RISK=[.18,.42,.25,.38,.52,.35,.28,.22];
+  const B1=[45,28,35,32,22,30,20,55];
+  const names=['Nông-TS','CN CB','Xây dựng','Bán lẻ','Tài chính','Logistics','CNTT','Giáo dục'];
+  const xai=B/8*.55, xh=B/8*.45;
+  const nj=names.map((_,i)=>{
+    const nw=(A1[i]*ab*xai/1000);
+    const up=(B1[i]*xh/1000);
+    const dp=(C1[i]*RISK[i]*xai/1000);
+    return+(nw+up-dp).toFixed(1);
+  });
+  const total=nj.reduce((a,b)=>a+b,0);
+  const neg=nj.filter(v=>v<0).length;
+  document.getElementById('b9-total').textContent=Math.round(total)+'k';
+  document.getElementById('b9-neg').textContent=neg;
+  mkChart('b9-chart',{type:'bar',data:{labels:names,datasets:[{data:nj,backgroundColor:nj.map(v=>v>=0?'#3fb950':'#f78166')}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}},scales:{...CHART_DEFAULTS.scales,y:{...CHART_DEFAULTS.scales.y,title:{display:true,text:'NetJob (k)',color:'#6e7681',font:{size:9}}}}}});
+}
+
+function updateB11(){
+  const ep=parseInt(document.getElementById('b11-e')?.value||5000);
+  const al=parseInt(document.getElementById('b11-a')?.value||10)/100;
+  const ga=parseInt(document.getElementById('b11-g')?.value||95)/100;
+  document.getElementById('b11-eo').textContent=ep.toLocaleString();
+  document.getElementById('b11-ao').textContent=al.toFixed(2);
+  document.getElementById('b11-go').textContent=ga.toFixed(2);
+  const rpi=+(0.25+ga*.15+al*.05+ep/80000).toFixed(3);
+  const ra1=+(rpi*.8).toFixed(3);
+  const ra3=+(rpi*.69).toFixed(3);
+  const rrnd=+(rpi*.53).toFixed(3);
+  document.getElementById('b11-rpi').textContent=rpi;
+  document.getElementById('b11-ra1').textContent=ra1;
+  document.getElementById('b11-ra3').textContent=ra3;
+  document.getElementById('b11-rrnd').textContent=rrnd;
+  const n=Math.min(200,ep/25);
+  const raw=Array.from({length:n},(_,i)=>+(rpi*(1-Math.exp(-i/n*3))-0.3+Math.random()*.1).toFixed(4));
+  const smoothed=raw.map((_,i)=>i<10?raw[i]:+(raw.slice(Math.max(0,i-10),i+1).reduce((a,b)=>a+b,0)/(Math.min(i+1,11))).toFixed(4));
+  mkChart('b11-chart',{type:'line',data:{labels:Array.from({length:n},(_,i)=>i*25),datasets:[{data:raw,borderColor:'#30363d',borderWidth:.8,pointRadius:0,label:'Raw'},{data:smoothed,borderColor:'#58a6ff',borderWidth:2,pointRadius:0,label:'Smoothed'}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+}
+
+const B12_SCENARIOS=[
+  {name:'S1 Truyền thống',K:.7,D:.1,AI:.1,H:.1,color:'#6e7681'},
+  {name:'S2 Số hóa nhanh',K:.25,D:.45,AI:.15,H:.15,color:'#58a6ff'},
+  {name:'S3 AI dẫn dắt',K:.2,D:.2,AI:.45,H:.15,color:'#f78166'},
+  {name:'S4 Bao trùm số',K:.3,D:.2,AI:.1,H:.4,color:'#3fb950'},
+  {name:'S5 Tối ưu cân bằng',K:.33,D:.27,AI:.2,H:.2,color:'#e3b341'},
+];
+
+function simScenario(sc,B){
+  let K0=27500,D0=20.3,AI0=86,H0=30,L0=53.9,A0=35;
+  const gdp=[];
+  for(let t=0;t<5;t++){
+    const Y=A0*Math.pow(K0,.31)*Math.pow(L0,.42)*Math.pow(Math.max(D0,.1),.10)*Math.pow(Math.max(AI0,.1),.08)*Math.pow(Math.max(H0,.1),.09);
+    gdp.push(Y);
+    const bt=B/5;
+    K0=.95*K0+sc.K*bt; D0+=sc.D*bt/500; AI0=.85*AI0+sc.AI*bt/80;
+    H0+=.8*sc.H*bt/600-.02*H0; A0*=(1+.003*D0+.002*AI0+.004*H0); L0*=1.01;
+  }
+  const gr=((gdp[4]/gdp[0])**(1/4)-1)*100;
+  const emis=sc.K*.4+sc.AI*.6;
+  const cr=sc.AI*.7-sc.H*.3;
+  const inc=sc.H*.5+sc.D*.3+(1-sc.AI)*.2;
+  const nj=sc.AI*400+sc.H*300-sc.AI*sc.K*100;
+  const score=.3*(Math.min(gr,12)/12)+.2*(Math.min(nj,600)/600)+.2*(1-Math.max(0,emis))+.15*Math.max(0,inc)+.15*(1-Math.max(0,cr));
+  return{gdp,gr:+gr.toFixed(1),score:+Math.min(1,Math.max(0,score)).toFixed(3),cr:+cr.toFixed(3),inc:+inc.toFixed(3),nj:Math.round(nj),emis:+emis.toFixed(3)};
+}
+
+function updateB12(){
+  const sc=parseInt(document.getElementById('b12-sc')?.value||2);
+  const B=parseInt(document.getElementById('b12-b')?.value||50000);
+  document.getElementById('b12-bo').textContent=B.toLocaleString();
+  const chosen=B12_SCENARIOS[sc];
+  const res=simScenario(chosen,B);
+  document.getElementById('b12-gdp').textContent=(res.gdp[4]/1000).toFixed(2)+'k';
+  document.getElementById('b12-gr').textContent=res.gr+'%';
+  document.getElementById('b12-nj').textContent=(res.nj>0?'+':'')+res.nj+'k';
+  document.getElementById('b12-sc-val').textContent=res.score;
+  document.getElementById('b12-sc-val').style.color=res.score>0.6?'#3fb950':res.score>0.4?'#e3b341':'#f78166';
+  document.getElementById('b12-cr').textContent=res.cr;
+  document.getElementById('b12-cr').style.color=res.cr>0.4?'#f78166':res.cr>0.25?'#e3b341':'#3fb950';
+  document.getElementById('b12-inc').textContent=res.inc;
+
+  const allRes=B12_SCENARIOS.map(s=>simScenario(s,B));
+  mkChart('b12-score-chart',{type:'bar',data:{labels:B12_SCENARIOS.map(s=>s.name.substring(0,18)),datasets:[{data:allRes.map(r=>r.score),backgroundColor:B12_SCENARIOS.map((s,i)=>i===sc?s.color:s.color+'88')}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+
+  const years=[2026,2027,2028,2029,2030];
+  mkChart('b12-gdp-chart',{type:'line',data:{labels:years,datasets:B12_SCENARIOS.map((s,i)=>({label:s.name,data:allRes[i].gdp.map(v=>+(v/1000).toFixed(1)),borderColor:s.color,borderWidth:i===sc?3:1,pointRadius:i===sc?4:2,tension:.3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:9},boxWidth:12}}},scales:{x:{grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}}},y:{grid:{color:'#21262d'},ticks:{color:'#6e7681',font:{size:9}},title:{display:true,text:'GDP (ng.tỷ)',color:'#6e7681',font:{size:9}}}}}});
+
+  const risks=['Cyber Risk','Phát thải','Thiếu bao trùm','Lao động','Tăng trưởng thấp'];
+  const rvals=[Math.max(0,res.cr),Math.max(0,res.emis),Math.max(0,1-res.inc),res.nj<0?0.8:0.1,Math.max(0,(8-res.gr)/8)];
+  mkChart('b12-risk-chart',{type:'radar',data:{labels:risks,datasets:[{label:chosen.name,data:rvals,backgroundColor:chosen.color+'33',borderColor:chosen.color,borderWidth:2,pointBackgroundColor:chosen.color}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{backgroundColor:'#161b22',grid:{color:'#30363d'},pointLabels:{color:'#8b949e',font:{size:9}},ticks:{display:false},min:0,max:1}}}});
+
+  const alertEl=document.getElementById('b12-risk-alerts');
+  if(alertEl){
+    let html='';
+    if(res.cr>0.4)html+=`<div class="err-box">🔴 Rủi ro an ninh số cao: ${res.cr} > 0.4 — AI cao nhưng nhân lực bảo mật chưa đủ</div>`;
+    else if(res.cr>0.25)html+=`<div class="warn-box">🟡 An ninh số cần theo dõi: ${res.cr}</div>`;
+    else html+=`<div class="success-box">✅ An ninh số: ${res.cr} — kiểm soát tốt</div>`;
+    if(res.emis>0.5)html+=`<div class="err-box">🔴 Phát thải cao: ${res.emis} — có thể vi phạm cam kết COP26</div>`;
+    else if(res.emis>0.35)html+=`<div class="warn-box">🟡 Phát thải trung bình: ${res.emis}</div>`;
+    else html+=`<div class="success-box">✅ Phát thải thấp: ${res.emis} — phù hợp Net-zero 2050</div>`;
+    if(res.inc<0.25)html+=`<div class="err-box">🔴 Bao trùm số thấp: ${res.inc} — nguy cơ khoảng cách số gia tăng</div>`;
+    else html+=`<div class="success-box">✅ Bao trùm: ${res.inc}</div>`;
+    alertEl.innerHTML=html;
+  }
+}
+
+function updateB6(){
+  const wai=parseInt(document.getElementById('b6-wai')?.value||20)/100;
+  const wd=parseInt(document.getElementById('b6-wd')?.value||15)/100;
+  document.getElementById('b6-wai-out').textContent=wai.toFixed(2);
+  document.getElementById('b6-wd-out').textContent=wd.toFixed(2);
+  const aiR=[22,68,40,18,75,30];
+  const dig=[38,78,55,32,82,48];
+  const grdp=[57,152.3,87.5,68.9,158.9,80.5];
+  const names=['TDMNPB','ĐBSH','BTBDHMT','TN','ĐNB','ĐBSCL'];
+  const norm=(arr)=>{const mn=Math.min(...arr),mx=Math.max(...arr);return arr.map(v=>(v-mn)/(mx-mn||1));};
+  const na=norm(aiR),nd=norm(dig),ng=norm(grdp);
+  const scores=names.map((_,i)=>+(wai*na[i]+wd*nd[i]+(1-wai-wd)*.3*ng[i]+.1*na[i]).toFixed(4));
+  const sorted=names.map((n,i)=>({n,v:scores[i]})).sort((a,b)=>b.v-a.v);
+  const el=document.getElementById('b6-bars');
+  if(el)el.innerHTML=sorted.map((x,i)=>`<div class="rank-bar"><div class="rank-label">${x.n}</div><div class="rank-fill" style="width:${(x.v/sorted[0].v*100).toFixed(0)}%;background:${i<2?'#f78166':'#58a6ff'}"></div><div class="rank-score">${x.v.toFixed(4)}</div></div>`).join('');
+  const cats=['GRDP/người','FDI','Digital','AI Ready','LĐ ĐT','R&D','Internet'];
+  const regData=[[57,3.5,38,22,21.5,.18,72],[152,20,78,68,36.8,.85,92],[87,8.2,55,40,27.5,.32,84],[68,.8,32,18,18.2,.15,68],[158,18.5,82,75,42.5,.78,94],[80,2.1,48,30,16.8,.22,78]];
+  const nm=(arr)=>{const mn=Math.min(...arr),mx=Math.max(...arr);return arr.map(v=>(v-mn)/(mx-mn||1));};
+  const normed=cats.map((_,ci)=>nm(regData.map(r=>r[ci])));
+  const hexes=['#58a6ff','#3fb950','#e3b341','#f78166','#d2a8ff','#79c0ff'];
+  mkChart('b6-chart',{type:'radar',data:{labels:cats,datasets:names.map((n,i)=>({label:n,data:cats.map((_,ci)=>+normed[ci][i].toFixed(2)),borderColor:hexes[i],backgroundColor:hexes[i]+'22',borderWidth:1.5,pointRadius:2}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#8b949e',font:{size:8},boxWidth:10}}},scales:{r:{backgroundColor:'#161b22',grid:{color:'#30363d'},pointLabels:{color:'#8b949e',font:{size:8}},ticks:{display:false},min:0,max:1}}}});
+}
+
+function initPage(id){
+  if(id==='home'){
+    mkChart('home-chart',{type:'bar',data:{labels:YEARS,datasets:[{data:GDP,backgroundColor:YEARS.map((_,i)=>i===5?'#58a6ff':'#58a6ff66')}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+  }
+  if(id==='b1'){updateB1();initB1TFP();}
+  if(id==='b2'){updateB2();}
+  if(id==='b3'){updateB3();}
+  if(id==='b4'){updateB4();}
+  if(id==='b6'){updateB6();}
+  if(id==='b7'){updateB7();}
+  if(id==='b8'){updateB8();}
+  if(id==='b9'){updateB9();}
+  if(id==='b10'){
+    mkChart('b10-chart',{type:'bar',data:{labels:['Z EV (Deterministic)','Z* SP (Stochastic)','Z WS (Perfect Info)'],datasets:[{data:[82100,87250,96150],backgroundColor:['#f78166','#58a6ff','#3fb950']}]},options:{...CHART_DEFAULTS,plugins:{legend:{display:false}}}});
+  }
+  if(id==='b11'){updateB11();}
+  if(id==='b12'){updateB12();}
+}
+
+navigate('home');
+</script>
