@@ -70,6 +70,11 @@ def _target_from_text(text: str) -> str:
     return TAB_RESULT
 
 
+def _source_policy_heading(text: str) -> bool:
+    upper = text.upper()
+    return "12. PHÂN TÍCH CHÍNH SÁCH" in upper or "13. KẾT LUẬN" in upper
+
+
 def _is_section_text(text: str) -> bool:
     upper = text.upper()
     return any(
@@ -95,6 +100,23 @@ def _section_title_from_text(text: str) -> tuple[str, str]:
         title = title[3:]
     body = "\n\n".join(lines[1:]).strip()
     return title, body
+
+
+def _policy_override_result_title(title: str) -> str:
+    replacements = {
+        "6. CÂU 4.4.1": "Câu 4.4.1",
+        "7. CÂU 4.4.2": "Câu 4.4.2",
+        "8. CÂU 4.4.3": "Câu 4.4.3",
+        "9. CÂU 4.4.4": "Câu 4.4.4",
+        "10. MỞ RỘNG": "Câu 4.4.5",
+        "11. MỞ RỘNG": "Câu 4.4.6",
+    }
+    upper = title.upper()
+    for prefix, replacement in replacements.items():
+        if upper.startswith(prefix):
+            suffix = title[len(prefix):].lstrip(" —-")
+            return f"{replacement} — {suffix}" if suffix else replacement
+    return title
 
 
 def _section(container, title: str, icon: str = "📌") -> None:
@@ -124,6 +146,12 @@ def _result_note(container, title: str, sentences: list[str]) -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
+def _render_policy_sections(container, sections: tuple[tuple[str, str, str], ...]) -> None:
+    for title, icon, body in sections:
+        _section(container, title, icon)
+        container.markdown(body.strip())
 
 
 def _number(value) -> str:
@@ -242,7 +270,15 @@ def _ai_agent(text: str) -> None:
         unsafe_allow_html=True,
     )
 
-def run_colab_source(source_path: str, icon: str, title: str, labels: tuple[str, ...], agent_text: str) -> None:
+def run_colab_source(
+    source_path: str,
+    icon: str,
+    title: str,
+    labels: tuple[str, ...],
+    agent_text: str,
+    *,
+    policy_sections: tuple[tuple[str, str, str], ...] | None = None,
+) -> None:
     _header(icon, title, labels)
     tabs = st.tabs(
         [
@@ -261,6 +297,7 @@ def run_colab_source(source_path: str, icon: str, title: str, labels: tuple[str,
     }
     touched = {k: False for k in containers}
     state = SimpleNamespace(current=TAB_CONTEXT)
+    suppress_source_policy = SimpleNamespace(active=False)
 
     with tabs[1]:
         st.info(
@@ -282,13 +319,26 @@ def run_colab_source(source_path: str, icon: str, title: str, labels: tuple[str,
     def streamlit_print(*args, **kwargs) -> None:
         sep = kwargs.get("sep", " ")
         text = sep.join(str(arg) for arg in args)
-        state.current = _target_from_text(text)
         cleaned = _clean_print_text(text)
+        if policy_sections is not None:
+            if suppress_source_policy.active:
+                return
+            if _source_policy_heading(cleaned):
+                suppress_source_policy.active = True
+                return
+            if "KẾT LUẬN:" in cleaned.upper():
+                state.current = TAB_RESULT
+            else:
+                state.current = _target_from_text(text)
+        else:
+            state.current = _target_from_text(text)
         if not cleaned:
             return
         target = use(state.current)
         if _is_section_text(cleaned):
             title, body = _section_title_from_text(cleaned)
+            if policy_sections is not None:
+                title = _policy_override_result_title(title)
             icon = "📌"
             if "CÂU" in title.upper():
                 icon = "📊"
@@ -313,6 +363,8 @@ def run_colab_source(source_path: str, icon: str, title: str, labels: tuple[str,
             target.markdown(cleaned)
 
     def streamlit_display(obj=None, *args, **kwargs) -> None:
+        if policy_sections is not None and suppress_source_policy.active:
+            return
         target = use(state.current if state.current in {TAB_CONTEXT, TAB_CONFIG, TAB_POLICY} else TAB_RESULT)
         if isinstance(obj, Styler):
             target.dataframe(obj, use_container_width=True)
@@ -380,6 +432,10 @@ def run_colab_source(source_path: str, icon: str, title: str, labels: tuple[str,
                 go.Figure.show = old_plotly_show
             except Exception:
                 pass
+
+    if policy_sections is not None:
+        _render_policy_sections(containers[TAB_POLICY], policy_sections)
+        touched[TAB_POLICY] = True
 
     for key, container in containers.items():
         if not touched[key]:

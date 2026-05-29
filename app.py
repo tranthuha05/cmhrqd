@@ -184,15 +184,11 @@ def _aideom_style_plotly(fig):
                 margin=dict(l=50, r=50, t=96, b=120),
                 height=max(getattr(fig.layout, "height", 0) or 0, 520),
             )
-        if not any(getattr(ann, "text", "") == "AIDEOM-VN Policy Lab" for ann in fig.layout.annotations or []):
-            fig.add_annotation(
-                text="AIDEOM-VN Policy Lab | Đơn vị theo bảng dữ liệu",
-                xref="paper",
-                yref="paper",
-                x=1,
-                y=-0.34,
-                showarrow=False,
-                font=dict(size=12, color="rgba(59,31,53,0.72)"),
+        if fig.layout.annotations:
+            fig.layout.annotations = tuple(
+                ann
+                for ann in fig.layout.annotations
+                if "AIDEOM-VN Policy Lab" not in str(getattr(ann, "text", ""))
             )
         for ann in fig.layout.annotations or []:
             try:
@@ -453,6 +449,10 @@ if not getattr(st, "_aideom_plotly_patched", False):
         elif isinstance(figure_or_data, (dict, list, tuple)):
             figure_or_data = _aideom_scrub_plotly_dict(figure_or_data)
         kwargs.setdefault("use_container_width", True)
+        config = dict(kwargs.get("config") or {})
+        config.setdefault("responsive", True)
+        config.setdefault("displaylogo", False)
+        kwargs["config"] = config
         result = _aideom_original_plotly_chart(figure_or_data, *args, **kwargs)
         if hasattr(note_source, "update_layout"):
             _render_plotly_result_note(note_source)
@@ -2209,6 +2209,172 @@ textarea::placeholder,
   white-space:normal;
 }
 
+/* Public Streamlit Cloud UI fixes: toolbar stickers, readable menus, compact cards, responsive charts. */
+[data-testid="stHeader"],
+[data-testid="stToolbar"]{
+  background:linear-gradient(90deg,rgba(255,250,253,.86),rgba(239,250,255,.78),rgba(248,244,255,.84))!important;
+  backdrop-filter:blur(18px) saturate(1.18)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.18)!important;
+}
+[data-testid="stToolbar"]{
+  gap:.38rem!important;
+}
+[data-testid="stToolbar"] button,
+[data-testid="stToolbar"] [role="button"],
+[data-testid="stHeader"] button,
+[data-testid="stMainMenu"],
+[data-testid="stStatusWidget"],
+[data-testid="stDeployButton"],
+[data-testid="stAppDeployButton"]{
+  min-width:36px!important;
+  min-height:36px!important;
+  border-radius:14px!important;
+  border:1px solid rgba(244,114,182,.34)!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(255,231,242,.70),rgba(226,249,255,.62))!important;
+  color:#2B1230!important;
+  fill:#2B1230!important;
+  box-shadow:0 10px 24px rgba(122,64,112,.10), inset 0 1px 0 rgba(255,255,255,.90)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+}
+[data-testid="stToolbar"] button:hover,
+[data-testid="stToolbar"] [role="button"]:hover,
+[data-testid="stHeader"] button:hover,
+[data-testid="stMainMenu"]:hover,
+[data-testid="stStatusWidget"]:hover,
+[data-testid="stDeployButton"]:hover,
+[data-testid="stAppDeployButton"]:hover{
+  background:linear-gradient(135deg,rgba(255,236,246,.96),rgba(230,250,255,.88),rgba(249,242,255,.92))!important;
+  border-color:rgba(244,114,182,.62)!important;
+  box-shadow:0 12px 28px rgba(122,64,112,.14),0 0 0 4px rgba(244,114,182,.15)!important;
+}
+[data-testid="stStatusWidget"]{
+  display:flex!important;
+  visibility:visible!important;
+  width:36px!important;
+  height:36px!important;
+  min-width:36px!important;
+  min-height:36px!important;
+  margin:0 .18rem!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+[data-testid="stStatusWidget"] *,
+[data-testid="stStatusWidget"] canvas,
+[data-testid="stStatusWidget"] img,
+[data-testid="stStatusWidget"] svg{
+  display:none!important;
+}
+[data-testid="stStatusWidget"]::before{
+  content:"🌸"!important;
+  display:grid!important;
+  place-items:center!important;
+  width:100%!important;
+  height:100%!important;
+  color:#2B1230!important;
+  font-size:18px!important;
+  line-height:1!important;
+  opacity:1!important;
+}
+[data-testid="stMainMenu"]::before{content:"🍩"!important;font-size:17px!important;line-height:1!important;}
+[data-testid="stToolbar"] button[aria-label*="rerun" i]::before,
+[data-testid="stToolbar"] button[title*="rerun" i]::before{content:"✨"!important;font-size:17px!important;}
+[data-testid="stToolbar"] button[aria-label*="favorite" i]::before,
+[data-testid="stToolbar"] button[title*="favorite" i]::before{content:"💖"!important;font-size:17px!important;}
+[data-testid="stToolbar"] button[aria-label*="more" i]::before,
+[data-testid="stToolbar"] button[title*="more" i]::before{content:"🥐"!important;font-size:17px!important;}
+[data-testid="stToolbar"] button:empty,
+[data-testid="stToolbar"] [role="button"]:empty{
+  display:none!important;
+}
+[data-baseweb="popover"],
+[data-baseweb="popover"] > div,
+[data-baseweb="menu"],
+[role="menu"],
+[data-baseweb="tooltip"]{
+  background:linear-gradient(135deg,#fffafd,#fff0f7 44%,#eefbff 100%)!important;
+  color:#2B1230!important;
+  border:1px solid rgba(244,114,182,.32)!important;
+  border-radius:16px!important;
+  box-shadow:0 18px 44px rgba(122,64,112,.16)!important;
+}
+[data-baseweb="menu"] *,
+[role="menu"] *,
+[data-baseweb="popover"] *,
+[data-baseweb="tooltip"] *{
+  color:#2B1230!important;
+  fill:#2B1230!important;
+  font-weight:800!important;
+  opacity:1!important;
+}
+[data-baseweb="menu"] li:hover,
+[data-baseweb="menu"] div:hover,
+[role="menuitem"]:hover{
+  background:rgba(244,114,182,.15)!important;
+  color:#2B1230!important;
+}
+[data-testid="stPlotlyChart"]{
+  width:100%!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  padding:clamp(4px,1vw,10px)!important;
+}
+[data-testid="stPlotlyChart"] .js-plotly-plot,
+[data-testid="stPlotlyChart"] .plot-container,
+[data-testid="stPlotlyChart"] .svg-container{
+  width:100%!important;
+  max-width:100%!important;
+}
+.mod-card{
+  overflow:hidden!important;
+  min-height:178px!important;
+}
+.mod-kicker{
+  display:flex!important;
+  align-items:center!important;
+  gap:.42rem!important;
+  max-width:100%!important;
+  color:#B83280!important;
+  font-weight:900!important;
+  font-size:.72rem!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.mod-kicker-icon{
+  flex:0 0 1.25rem!important;
+  width:1.25rem!important;
+  height:1.25rem!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  border-radius:.5rem!important;
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,224,239,.86))!important;
+  border:1px solid rgba(244,114,182,.25)!important;
+  box-shadow:0 5px 12px rgba(122,64,112,.08)!important;
+  font-size:.82rem!important;
+  line-height:1!important;
+}
+.mod-card h4,
+.mod-card p,
+.mod-card .badge{
+  max-width:100%!important;
+  overflow-wrap:anywhere!important;
+}
+@media (max-width: 720px){
+  [data-testid="stToolbar"] button,
+  [data-testid="stToolbar"] [role="button"],
+  [data-testid="stMainMenu"],
+  [data-testid="stStatusWidget"]{
+    width:34px!important;
+    height:34px!important;
+    min-width:34px!important;
+    min-height:34px!important;
+  }
+  .mod-card{min-height:auto!important;}
+  .mod-kicker{font-size:.68rem!important;}
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -2391,7 +2557,7 @@ def show_home() -> None:
                 st.markdown(
                     f"""
                     <div class="mod-card">
-                      <div style="color:#00E5FF;font-weight:900;font-size:.72rem;">{icon} BÀI {num}</div>
+                      <div class="mod-kicker"><span class="mod-kicker-icon">{icon}</span><span>BÀI {num}</span></div>
                       <h4>{title}</h4>
                       <p>{desc}</p>
                       <div style="margin-top:.55rem;"><span class="badge b-blue">{tech}</span></div>
