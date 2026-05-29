@@ -78,12 +78,24 @@ Kết quả thảo luận chính sách cho thấy:
 
 
 def _source_path() -> str:
-    root = next(
-        p
-        for p in Path("D:/").iterdir()
-        if (p / "bai04_lp_ngansach_nganh_vung (1).py").exists()
-    )
-    return str(root / "bai04_lp_ngansach_nganh_vung (1).py")
+    """
+    Lấy đường dẫn file source bài 4 theo kiểu tương đối trong repo.
+
+    Không dùng D:/ vì Streamlit Cloud không có ổ D.
+    File bai04_lp_ngansach_nganh_vung (1).py đang nằm ở thư mục gốc repo,
+    ngang hàng với app.py.
+    """
+    project_root = Path(__file__).resolve().parent.parent
+    source_file = project_root / "bai04_lp_ngansach_nganh_vung (1).py"
+
+    if not source_file.exists():
+        raise FileNotFoundError(
+            f"Không tìm thấy file source bài 4: {source_file}. "
+            "Hãy kiểm tra file 'bai04_lp_ngansach_nganh_vung (1).py' "
+            "có nằm ngang hàng với app.py trong repo GitHub không."
+        )
+
+    return str(source_file)
 
 
 def show() -> None:
