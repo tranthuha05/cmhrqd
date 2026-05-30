@@ -81,7 +81,6 @@ def _source_path() -> str:
     """
     Lấy đường dẫn file source bài 4 theo kiểu tương đối trong repo.
 
-    Không dùng D:/ vì Streamlit Cloud không có ổ D.
     File bai04_lp_ngansach_nganh_vung (1).py đang nằm ở thư mục gốc repo,
     ngang hàng với app.py.
     """
@@ -114,4 +113,6 @@ def show() -> None:
         tảng còn yếu trước khi mở rộng đầu tư AI trực tiếp.
         """,
         policy_sections=POLICY_SECTIONS,
+        format_result_titles=True,
+        show_source_controls=False,
     )

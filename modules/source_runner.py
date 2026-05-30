@@ -65,7 +65,7 @@ def _target_from_text(text: str) -> str:
         return TAB_CONTEXT
     if "DỮ LIỆU" in upper or "THAM SỐ" in upper or "KỊCH BẢN" in upper:
         return TAB_CONFIG
-    if "PHÂN TÍCH CHÍNH SÁCH" in upper or "KẾT LUẬN" in upper:
+    if "PHÂN TÍCH CHÍNH SÁCH" in upper or upper.strip().startswith(("KẾT LUẬN", "KET LUAN", "CONCLUSION")):
         return TAB_POLICY
     return TAB_RESULT
 
@@ -278,6 +278,9 @@ def run_colab_source(
     agent_text: str,
     *,
     policy_sections: tuple[tuple[str, str, str], ...] | None = None,
+    hide_source_policy: bool = False,
+    show_source_controls: bool = True,
+    format_result_titles: bool = False,
 ) -> None:
     _header(icon, title, labels)
     tabs = st.tabs(
@@ -299,18 +302,19 @@ def run_colab_source(
     state = SimpleNamespace(current=TAB_CONTEXT)
     suppress_source_policy = SimpleNamespace(active=False)
 
-    with tabs[1]:
-        st.info(
-            "Các tham số, dữ liệu và công thức được lấy trực tiếp từ file Python gốc. "
-            "Runner chỉ chuyển print/display/plt.show sang Streamlit, không thay đổi logic tính toán."
-        )
-        st.caption(f"Nguồn logic: `{source_path}`")
-        st.slider("Chiều cao biểu đồ Matplotlib", 420, 720, 520, 20, key=f"chart_height_{Path(source_path).stem}")
-        st.selectbox(
-            "Chế độ đọc báo cáo",
-            ["Theo đúng thứ tự câu hỏi trong file gốc", "Tập trung kết quả và chính sách"],
-            key=f"read_mode_{Path(source_path).stem}",
-        )
+    if show_source_controls:
+        with tabs[1]:
+            st.info(
+                "Các tham số, dữ liệu và công thức được lấy trực tiếp từ file Python gốc. "
+                "Runner chỉ chuyển print/display/plt.show sang Streamlit, không thay đổi logic tính toán."
+            )
+            st.caption(f"Nguồn logic: `{source_path}`")
+            st.slider("Chiều cao biểu đồ Matplotlib", 420, 720, 520, 20, key=f"chart_height_{Path(source_path).stem}")
+            st.selectbox(
+                "Chế độ đọc báo cáo",
+                ["Theo đúng thứ tự câu hỏi trong file gốc", "Tập trung kết quả và chính sách"],
+                key=f"read_mode_{Path(source_path).stem}",
+            )
 
     def use(target: str):
         touched[target] = True
@@ -320,7 +324,7 @@ def run_colab_source(
         sep = kwargs.get("sep", " ")
         text = sep.join(str(arg) for arg in args)
         cleaned = _clean_print_text(text)
-        if policy_sections is not None:
+        if policy_sections is not None or hide_source_policy:
             if suppress_source_policy.active:
                 return
             if _source_policy_heading(cleaned):
@@ -337,7 +341,7 @@ def run_colab_source(
         target = use(state.current)
         if _is_section_text(cleaned):
             title, body = _section_title_from_text(cleaned)
-            if policy_sections is not None:
+            if policy_sections is not None or format_result_titles:
                 title = _policy_override_result_title(title)
             icon = "📌"
             if "CÂU" in title.upper():
@@ -363,7 +367,7 @@ def run_colab_source(
             target.markdown(cleaned)
 
     def streamlit_display(obj=None, *args, **kwargs) -> None:
-        if policy_sections is not None and suppress_source_policy.active:
+        if (policy_sections is not None or hide_source_policy) and suppress_source_policy.active:
             return
         target = use(state.current if state.current in {TAB_CONTEXT, TAB_CONFIG, TAB_POLICY} else TAB_RESULT)
         if isinstance(obj, Styler):
