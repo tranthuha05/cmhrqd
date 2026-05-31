@@ -335,6 +335,19 @@ Trong đó:
             Đây là cơ chế đưa mục tiêu bao trùm lao động vào bài toán tối ưu.
             Trong thực tế, ràng buộc này tương ứng với ngân sách bảo hiểm thất nghiệp, voucher kỹ năng số và chương trình đào tạo lại cấp ngành.
             """)
+            total_new = res["NewJob"].sum()
+            total_upgrade = res["UpgradeJob"].sum()
+            total_displaced = res["DisplacedJob"].sum()
+            section("4. Hàm ý chính sách nâng cấp", "📋")
+            st.markdown(f"""
+**Kết quả nổi bật.** Tổng NetJob đạt **{res['objective']:,.0f}**; ngành cần đào tạo lại nhiều nhất là **{sectors[max_h_idx]}** với **{x_H_v[max_h_idx]:,.1f} tỷ VND**; ngành bị thay thế việc làm cao nhất là **{sectors[max_dis_idx]}**; tổng việc làm mới **{total_new:,.0f}**, nâng cấp **{total_upgrade:,.0f}**, bị thay thế **{total_displaced:,.0f}**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả gắn với **Quyết định 411/QĐ-TTg** và **Nghị quyết 57-NQ/TW**: AI trong kinh tế số phải đi cùng đào tạo lại và bảo vệ thị trường lao động.
+
+**Đánh đổi cần lưu ý:** AI và đào tạo lại lao động; tăng tự động hóa mà không tăng H sẽ làm chi phí an sinh xã hội tăng.
+
+**Khuyến nghị hành động.** Ưu tiên ngân sách đào tạo lại cho **{sectors[max_h_idx]}**; theo dõi DisplacedJob theo ngành; giữ ràng buộc an sinh khi tăng x_AI; thiết kế voucher kỹ năng số cho ngành có NetJob thấp hoặc DisplacedJob cao.
+            """)
         else:
             st.warning("Mô hình hiện không khả thi nên chưa thể đưa ra phân tích chính sách định lượng.")
 

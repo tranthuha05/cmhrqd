@@ -340,6 +340,18 @@ Q(S<sub>t</sub>, A<sub>t</sub>) ← Q(S<sub>t</sub>, A<sub>t</sub>) + α · [ R<
         Mô hình không thay thế quyết định của Chính phủ, nhưng giúp thử nghiệm quy tắc phản ứng trước khi áp dụng thật.
         Hướng mở rộng là kết nối dữ liệu thời gian thực và kiểm định chính sách bằng mô phỏng nhiều tác tử.
         """)
+        sorted_policy = sorted(counts_dict_policy.items(), key=lambda kv: kv[1], reverse=True)
+        second_action, second_count = sorted_policy[1] if len(sorted_policy) > 1 else (dominant_action, counts_dict_policy[dominant_action])
+        section("4. Hàm ý chính sách nâng cấp", "📋")
+        st.markdown(f"""
+**Kết quả nổi bật.** Chính sách xuất hiện nhiều nhất là **{action_names[int(dominant_action)]}** với **{counts_dict_policy[dominant_action]} / 81** trạng thái; lựa chọn đứng thứ hai là **{action_names[int(second_action)]}** với **{second_count} / 81** trạng thái; không gian mô phỏng có **81** trạng thái và **5** hành động chính sách.
+
+**Liên hệ chính sách Việt Nam.** Kết quả phù hợp với **Quyết định 127/QĐ-TTg** và **Nghị quyết 57-NQ/TW**: chính sách AI/chuyển đổi số cần cơ chế phản ứng thích nghi dựa trên dữ liệu trạng thái, không chỉ kế hoạch cố định.
+
+**Đánh đổi cần lưu ý:** tối ưu phản ứng nhanh và tính ổn định chính sách; thay đổi hành động quá thường xuyên có thể gây khó triển khai nếu thiếu dữ liệu giám sát.
+
+**Khuyến nghị hành động.** Xây bộ chỉ báo kích hoạt chính sách theo GDP, Digital Index, AI capacity và unemployment risk; dùng policy map để thử nghiệm trước khi ban hành; ưu tiên hành động bao trùm khi thất nghiệp cao; theo dõi tần suất chuyển chính sách để tránh dao động quá mức.
+        """)
 
     # ══ Tab 5: AI Agent ═══════════════════════════════════════════════════
     with tabs[4]:

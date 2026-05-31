@@ -350,6 +350,19 @@ def show():
         Thay vì đầu tư trung tâm AI quy mô lớn ngay, vùng này cần gói nền tảng: internet, dữ liệu hành chính, đào tạo kỹ năng số và hỗ trợ SME.
         Cách tiếp cận này giảm rủi ro lãng phí khi năng lực hấp thụ công nghệ chưa đủ.
         """)
+        top_score = df_res.iloc[0]["TOPSIS Score (C*)"]
+        low_score = df_res.iloc[-1]["TOPSIS Score (C*)"]
+        top_ai = df_raw.sort_values("ai_readiness_0_100", ascending=False).iloc[0]
+        section("4. Hàm ý chính sách nâng cấp", "📋")
+        st.markdown(f"""
+**Kết quả nổi bật.** Vùng dẫn đầu là **{top1_r}** với C* = **{top_score:.4f}**; vùng thấp nhất là **{lowest_r}** với C* = **{low_score:.4f}**; vùng có AI Readiness cao nhất là **{top_ai['region_name_vi']}** với **{top_ai['ai_readiness_0_100']:.0f}/100**; chênh lệch điểm TOPSIS là **{top_score - low_score:.4f}**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả gắn với **Quyết định 749/QĐ-TTg** và **Nghị quyết 57-NQ/TW**: đầu tư AI theo vùng cần phân tầng theo năng lực số, AI readiness và nhân lực qua đào tạo.
+
+**Đánh đổi cần lưu ý:** tăng trưởng và công bằng vùng; ưu tiên vùng dẫn đầu tạo cực tăng trưởng nhanh nhưng vùng thấp cần gói nền tảng để không bị bỏ lại.
+
+**Khuyến nghị hành động.** Đặt sandbox AI ở **{top1_r}** và **{top2_r}**; ưu tiên internet, dữ liệu hành chính và kỹ năng số cho **{lowest_r}**; theo dõi TOPSIS dưới cả trọng số chuyên gia và Entropy; không dùng một điểm xếp hạng duy nhất để quyết định toàn bộ ngân sách.
+        """)
 
     # ══ Tab 5: AI Agent ═══════════════════════════════════════════════════
     with tabs[4]:

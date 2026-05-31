@@ -343,6 +343,19 @@ Risk được trừ đi trong công thức tính Priority để thể hiện tá
         Nếu AI readiness cao đi cùng rủi ro tự động hóa lớn, đầu tư AI nên kèm ngân sách đào tạo lại và bảo vệ việc làm.
         Vì vậy, Priority Index nên được dùng như công cụ sàng lọc ban đầu, sau đó kết hợp đánh giá lao động và an sinh xã hội.
         """)
+        top_row = df_res.iloc[0]
+        low_row = df_res.iloc[-1]
+        risk_row = df_raw.sort_values("automation_risk_pct", ascending=False).iloc[0]
+        section("4. Hàm ý chính sách nâng cấp", "📋")
+        st.markdown(f"""
+**Kết quả nổi bật.** Ngành đứng đầu là **{top_row['sector_name_vi']}** với Priority = **{top_row['Priority']:.4f}**; nhóm Top 3 gồm **{top3}**; ngành cuối bảng là **{low_row['sector_name_vi']}**; ngành rủi ro tự động hóa cao nhất là **{risk_row['sector_name_vi']}** với **{risk_row['automation_risk_pct']:.1f}%**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả phù hợp với **Nghị quyết 57-NQ/TW** khi ưu tiên ngành dựa trên đổi mới sáng tạo, AI readiness và lan tỏa; đồng thời hỗ trợ **Quyết định 411/QĐ-TTg** trong lựa chọn ngành kinh tế số trọng điểm.
+
+**Đánh đổi cần lưu ý:** AI và đào tạo lại lao động; ngành có AI readiness cao cần ngân sách kỹ năng số nếu automation risk lớn.
+
+**Khuyến nghị hành động.** Ưu tiên thử nghiệm AI trong Top 3 ngành; tăng đào tạo lại cho ngành có automation risk cao nhất; theo dõi Priority khi thay đổi trọng số việc làm/rủi ro; không dùng tăng trưởng đơn lẻ để quyết định phân bổ ngân sách.
+        """)
 
     # ══ Tab 5: AI Agent ═══════════════════════════════════════════════════
     with tabs[4]:

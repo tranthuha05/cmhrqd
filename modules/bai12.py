@@ -8,6 +8,7 @@ giữ nguyên logic tính toán và chỉ nâng cấp cách trình bày.
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,19 @@ CAPITAL_LABELS = {
     "AI": "AI - Năng lực AI",
     "H": "H - Nhân lực số",
 }
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "database"
+MACRO_CSV = "vietnam_macro_2020_2025.csv"
+SECTORS_CSV = "vietnam_sectors_2024.csv"
+REGIONS_CSV = "vietnam_regions_2024.csv"
+SOURCE_NOTE = (
+    "Các dữ liệu nền được tổng hợp từ nguồn thống kê và báo cáo chính thức trong giai đoạn 2020–2025. "
+    "Một số chỉ báo, hệ số tác động và trọng số chính sách được xây dựng phục vụ mục đích mô phỏng. "
+    "Kết quả của mô hình chỉ mang tính hỗ trợ ra quyết định, không phải dự báo chính thức."
+)
+UNCERTAIN_SOURCE = (
+    "Nguồn tham chiếu theo bộ dữ liệu đề bài; cần đối chiếu tài liệu gốc khi sử dụng cho nghiên cứu học thuật."
+)
 
 
 SCENARIOS = {
@@ -59,47 +73,56 @@ SCENARIOS = {
 }
 
 
-REGIONS_DF = pd.DataFrame(
-    {
-        "Vùng": [
-            "Trung du miền núi phía Bắc",
-            "Đồng bằng sông Hồng",
-            "Bắc Trung Bộ + DH Trung Bộ",
-            "Tây Nguyên",
-            "Đông Nam Bộ",
-            "Đồng bằng sông Cửu Long",
-        ],
-        "Digital_Index": [38, 78, 55, 32, 82, 48],
-        "AI_Readiness": [22, 68, 40, 18, 75, 30],
-        "Internet": [72, 92, 84, 68, 94, 78],
-        "Labor_Trained": [21.5, 36.8, 27.5, 18.2, 42.5, 16.8],
-        "Gini": [0.405, 0.358, 0.372, 0.412, 0.385, 0.392],
-    }
-)
+def read_database_csv(filename: str) -> pd.DataFrame:
+    return pd.read_csv(DATA_DIR / filename)
 
 
-SECTOR_DF = pd.DataFrame(
-    {
-        "Ngành": [
-            "Nông-Lâm-Thủy sản",
-            "CN chế biến chế tạo",
-            "Xây dựng",
-            "Bán buôn-bán lẻ",
-            "Tài chính-Ngân hàng",
-            "Logistics-Vận tải",
-            "CNTT-Truyền thông",
-            "Giáo dục-Đào tạo",
-            "Y tế",
-        ],
-        "Growth": [3.27, 9.64, 7.45, 7.10, 7.36, 9.93, 7.85, 6.42, 6.85],
-        "Productivity": [103.4, 241.2, 168.8, 145.3, 1072.4, 321.4, 713.8, 205.7, 437.1],
-        "Spillover": [0.35, 0.78, 0.42, 0.55, 0.85, 0.72, 0.92, 0.65, 0.60],
-        "Export": [40.5, 290.9, 2.5, 5.5, 1.2, 3.1, 178.0, 0.0, 0.0],
-        "Labor": [13.20, 11.50, 4.80, 7.80, 0.55, 1.95, 0.62, 2.15, 0.75],
-        "AI_Readiness": [15, 55, 20, 48, 72, 42, 88, 38, 45],
-        "Automation_Risk": [18, 42, 25, 38, 52, 35, 28, 22, 18],
-    }
-)
+@st.cache_data(show_spinner=False)
+def load_macro_df() -> pd.DataFrame:
+    return read_database_csv(MACRO_CSV)
+
+
+@st.cache_data(show_spinner=False)
+def load_regions_df() -> pd.DataFrame:
+    raw = read_database_csv(REGIONS_CSV)
+    return pd.DataFrame(
+        {
+            "Vùng": raw["region_name_vi"],
+            "Digital_Index": raw["digital_index_0_100"],
+            "AI_Readiness": raw["ai_readiness_0_100"],
+            "Internet": raw["internet_penetration_pct"],
+            "Labor_Trained": raw["trained_labor_pct"],
+            "Gini": raw["gini_coef"],
+            "GRDP": raw["grdp_trillion_VND"],
+            "GRDP_Growth": raw["grdp_growth_pct"],
+        }
+    )
+
+
+@st.cache_data(show_spinner=False)
+def load_sector_df() -> pd.DataFrame:
+    raw = read_database_csv(SECTORS_CSV)
+    productivity_proxy = raw["gdp_share_2024_pct"] / raw["labor_million"].replace(0, np.nan)
+    return pd.DataFrame(
+        {
+            "Ngành": raw["sector_name_vi"],
+            "Growth": raw["growth_rate_2024_pct"],
+            "Productivity": productivity_proxy.fillna(0) * 100,
+            "Spillover": raw["spillover_coef_0_1"],
+            "Export": raw["export_billion_USD"],
+            "Labor": raw["labor_million"],
+            "AI_Readiness": raw["ai_readiness_0_100"],
+            "Automation_Risk": raw["automation_risk_pct"],
+            "Digital_Index": raw["digital_index_0_100"],
+            "GDP_Share": raw["gdp_share_2024_pct"],
+            "R&D_Intensity": raw["rd_intensity_pct"],
+        }
+    )
+
+
+MACRO_DF = load_macro_df()
+REGIONS_DF = load_regions_df()
+SECTOR_DF = load_sector_df()
 
 
 def section(title: str, icon: str = "📌") -> None:
@@ -135,6 +158,87 @@ def policy_card(title: str, body: str, icon: str = "🍰") -> None:
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+
+def source_caption(dataset: str, unit: str, years: str) -> None:
+    st.caption(f"Nguồn dữ liệu nền: {dataset} | Đơn vị: {unit} | Năm dữ liệu: {years}")
+
+
+def render_data_sources_tab() -> None:
+    section("Chất lượng dữ liệu và phạm vi sử dụng", "📚")
+    st.info(SOURCE_NOTE)
+    metadata = pd.DataFrame(
+        [
+            {
+                "Bộ dữ liệu": MACRO_CSV,
+                "Phạm vi": "Kinh tế vĩ mô Việt Nam",
+                "Số quan sát": len(MACRO_DF),
+                "Năm dữ liệu": f"{int(MACRO_DF['year'].min())}-{int(MACRO_DF['year'].max())}",
+                "Năm cơ sở": "2024-2025",
+                "Đơn vị": "Tỷ VND, tỷ USD, %, triệu người",
+                "Nguồn chính thức": "Cục Thống kê quốc gia; World Bank; " + UNCERTAIN_SOURCE,
+                "Vai trò trong mô hình": "Dữ liệu nền cho bối cảnh M1 và kiểm tra xu hướng kinh tế số.",
+            },
+            {
+                "Bộ dữ liệu": SECTORS_CSV,
+                "Phạm vi": "Ngành kinh tế Việt Nam",
+                "Số quan sát": len(SECTOR_DF),
+                "Năm dữ liệu": "2024",
+                "Năm cơ sở": "2024",
+                "Đơn vị": "%, triệu lao động, tỷ USD, thang 0-100",
+                "Nguồn chính thức": "Cục Thống kê quốc gia; Bộ Khoa học và Công nghệ; WIPO — Global Innovation Index 2025; " + UNCERTAIN_SOURCE,
+                "Vai trò trong mô hình": "Dữ liệu nền cho M4 xếp hạng ngành và M5 mô phỏng việc làm-rủi ro.",
+            },
+            {
+                "Bộ dữ liệu": REGIONS_CSV,
+                "Phạm vi": "6 vùng kinh tế - xã hội",
+                "Số quan sát": len(REGIONS_DF),
+                "Năm dữ liệu": "2024",
+                "Năm cơ sở": "2024",
+                "Đơn vị": "Triệu người, nghìn tỷ VND, tỷ USD, %, thang 0-100",
+                "Nguồn chính thức": "Cục Thống kê quốc gia; Ủy ban Quốc gia về chuyển đổi số; World Bank; " + UNCERTAIN_SOURCE,
+                "Vai trò trong mô hình": "Dữ liệu nền cho M2 Regional Readiness và hàm ý phân tầng vùng.",
+            },
+        ]
+    )
+    st.dataframe(metadata, use_container_width=True)
+
+    section("Preview CSV", "🗂️")
+    previews = {
+        MACRO_CSV: MACRO_DF,
+        SECTORS_CSV: read_database_csv(SECTORS_CSV),
+        REGIONS_CSV: read_database_csv(REGIONS_CSV),
+    }
+    for name, df in previews.items():
+        with st.expander(f"Preview {name}", expanded=False):
+            st.dataframe(df.head(20), use_container_width=True)
+            st.caption(f"Số dòng: {len(df)} | Số cột: {len(df.columns)}")
+
+    section("Data dictionary", "📖")
+    dictionary = pd.DataFrame(
+        [
+            ("GDP_trillion_VND", "GDP danh nghĩa", "Dữ liệu thực tế", "Nghìn tỷ VND"),
+            ("GDP_growth_pct", "Tăng trưởng GDP", "Dữ liệu thực tế", "%"),
+            ("digital_economy_share_GDP_pct", "Tỷ trọng kinh tế số/GDP", "Chỉ báo tổng hợp", "%"),
+            ("digital_index_0_100", "Chỉ số chuyển đổi số", "Chỉ báo tổng hợp", "0-100"),
+            ("ai_readiness_0_100", "Mức sẵn sàng AI", "Chỉ báo tổng hợp", "0-100"),
+            ("spillover_coef_0_1", "Hệ số lan tỏa ngành", "Hệ số mô phỏng", "0-1"),
+            ("automation_risk_pct", "Rủi ro tự động hóa", "Hệ số mô phỏng", "%"),
+            ("Priority_Score", "Điểm ưu tiên ngành", "Kết quả mô hình", "Điểm chuẩn hóa"),
+            ("AIDEOM_Score", "Điểm tổng hợp kịch bản", "Kết quả mô hình", "Điểm chuẩn hóa"),
+            ("GDP_norm/NetJob_norm/Risk_norm", "Trọng số 0.45/0.30/0.25 trong M6", "Trọng số chính sách", "Tỷ trọng mô phỏng"),
+        ],
+        columns=["Biến", "Giải thích", "Loại dữ liệu", "Đơn vị"],
+    )
+    st.dataframe(dictionary, use_container_width=True)
+    policy_card(
+        "Phân loại dữ liệu trong AIDEOM-VN",
+        "Dữ liệu thực tế dùng để mô tả nền kinh tế và cấu trúc ngành-vùng. "
+        "Chỉ báo tổng hợp như Digital Index và AI Readiness giúp chuẩn hóa năng lực nền. "
+        "Hệ số mô phỏng và trọng số chính sách được dùng để chạy kịch bản, không phải số liệu thống kê chính thức. "
+        "Kết quả mô hình như Priority Score, NetJob và AIDEOM Score chỉ hỗ trợ ra quyết định.",
+        "🧭",
     )
 
 
@@ -267,28 +371,91 @@ def budget_outputs(total_budget: float = 50000) -> pd.DataFrame:
 
 
 def assign_policy_group(row: pd.Series) -> str:
-    if row["AI_Readiness"] >= 70 and row["Spillover"] >= 0.80:
-        return "A - Dẫn dắt AI"
-    if row["Automation_Risk"] >= 40 and row["Labor"] >= 5:
-        return "B - Rủi ro tự động hóa cao"
-    if row["Labor"] >= 7:
-        return "C - Bao trùm lao động lớn"
-    if row["Spillover"] >= 0.70:
-        return "D - Lan tỏa chuỗi giá trị"
-    return "E - Chuyển đổi có chọn lọc"
+    if row["Automation_Risk"] >= 50:
+        return "Cần quản trị rủi ro đặc thù"
+    if row["AI_Readiness"] >= 70 and row["Spillover"] >= 0.70:
+        return "Ưu tiên tăng tốc AI"
+    if row["AI_Readiness"] >= 45 and row["Automation_Risk"] < 50:
+        return "Đầu tư AI có điều kiện"
+    return "Ưu tiên nền tảng và nhân lực trước AI"
 
 
 def policy_recommendation(row: pd.Series) -> str:
     group = row["Policy_Group"]
-    if group == "A - Dẫn dắt AI":
-        return "Ưu tiên AI, dữ liệu lớn, R&D, sandbox và tiêu chuẩn an toàn dữ liệu."
-    if group == "B - Rủi ro tự động hóa cao":
-        return "Gắn AI với đào tạo lại, chuyển đổi nghề, bảo hiểm thất nghiệp chủ động."
-    if group == "C - Bao trùm lao động lớn":
-        return "Ưu tiên công nghệ hỗ trợ lao động, thương mại điện tử, kỹ năng số cơ bản."
-    if group == "D - Lan tỏa chuỗi giá trị":
-        return "Đầu tư dữ liệu chuỗi cung ứng, logistics số, nền tảng kết nối doanh nghiệp."
-    return "Triển khai số hóa có chọn lọc, tránh đầu tư dàn trải, ưu tiên dự án chi phí thấp."
+    if group == "Ưu tiên tăng tốc AI":
+        return "Mở rộng AI, dữ liệu lớn, R&D, sandbox và chuẩn an toàn dữ liệu theo từng use case."
+    if group == "Đầu tư AI có điều kiện":
+        return "Đầu tư AI theo dự án có kiểm soát, gắn với nâng cấp dữ liệu, quản trị rủi ro và đo hiệu quả."
+    if group == "Cần quản trị rủi ro đặc thù":
+        return "Gắn tự động hóa với đào tạo lại, bảo vệ việc làm và kiểm soát rủi ro dữ liệu-nghề nghiệp."
+    return "Ưu tiên hạ tầng số, kỹ năng số và dữ liệu nền trước khi mở rộng đầu tư AI quy mô lớn."
+
+
+def sector_policy_actions(row: pd.Series) -> list[str]:
+    group = row["Policy_Group"]
+    actions = []
+    if group == "Ưu tiên tăng tốc AI":
+        actions = [
+            "Mở rộng sandbox AI và dữ liệu ngành cho các bài toán có khả năng lan tỏa cao.",
+            "Ưu tiên ngân sách R&D và thử nghiệm AI có đo lường năng suất.",
+            "Thiết lập chuẩn quản trị dữ liệu và an toàn mô hình trước khi nhân rộng.",
+        ]
+    elif group == "Đầu tư AI có điều kiện":
+        actions = [
+            "Chọn 2-3 use case AI có dữ liệu đủ sạch và chỉ tiêu hiệu quả rõ.",
+            "Gắn đầu tư AI với nâng cấp hệ thống dữ liệu và năng lực quản trị số.",
+            "Theo dõi Automation Risk và NetJob sau mỗi chu kỳ triển khai.",
+        ]
+    elif group == "Cần quản trị rủi ro đặc thù":
+        actions = [
+            "Bắt buộc lập kế hoạch đào tạo lại cho nhóm việc làm dễ bị thay thế.",
+            "Giới hạn tự động hóa ở các khâu có rủi ro xã hội cao cho đến khi có phương án chuyển đổi nghề.",
+            "Tăng giám sát an toàn dữ liệu, bảo vệ người lao động và trách nhiệm thuật toán.",
+        ]
+    else:
+        actions = [
+            "Ưu tiên hạ tầng số, kết nối dữ liệu và kỹ năng số cơ bản.",
+            "Thử nghiệm AI quy mô nhỏ trước khi đầu tư diện rộng.",
+            "Tăng đào tạo lại cho nhóm lao động có kỹ năng số thấp.",
+        ]
+    if row["Retraining_Need"] >= SECTOR_DF["Labor"].median() * 0.25:
+        actions.append("Bố trí gói đào tạo lại theo ngành vì nhu cầu chuyển đổi kỹ năng đang ở mức đáng chú ý.")
+    return actions[:4]
+
+
+def sector_tradeoff(row: pd.Series) -> str:
+    if row["Automation_Risk"] >= 50:
+        return "Đánh đổi cần lưu ý là tốc độ tự động hóa có thể làm tăng thay thế việc làm nếu đào tạo lại không theo kịp."
+    if row["AI_Readiness"] >= 70:
+        return "Đánh đổi cần lưu ý là đổi mới sáng tạo nhanh phải đi cùng quản trị dữ liệu, an toàn mô hình và năng lực hấp thụ của doanh nghiệp."
+    if row["Labor"] >= SECTOR_DF["Labor"].median():
+        return "Đánh đổi cần lưu ý là nâng năng suất bằng công nghệ nhưng vẫn phải bảo vệ sinh kế và chuyển đổi kỹ năng cho lực lượng lao động lớn."
+    return "Đánh đổi cần lưu ý là đầu tư AI quá sớm có thể kém hiệu quả nếu dữ liệu, hạ tầng và kỹ năng nền chưa đủ."
+
+
+def render_sector_policy_card(row: pd.Series) -> None:
+    netjob = row.get("NetJob", np.nan)
+    actions = "".join(f"<li>{action}</li>" for action in sector_policy_actions(row))
+    diagnosis = (
+        f"Ngành {row['Ngành']} có AI Readiness {row['AI_Readiness']:.0f}/100, "
+        f"rủi ro tự động hóa {row['Automation_Risk']:.1f}% và NetJob {netjob:,.1f}. "
+        f"Vì vậy, ngành thuộc nhóm {row['Policy_Group']}. "
+        f"Ưu tiên trước mắt là {row['Policy_Recommendation'].lower()} "
+        f"{sector_tradeoff(row)}"
+    )
+    policy_card(
+        f"Hồ sơ chính sách ngành {row['Ngành']}",
+        f"""
+        <b>1. Hồ sơ ngành:</b> Tăng trưởng {row['Growth']:.2f}%, lao động {row['Labor']:.2f} triệu người,
+        xuất khẩu {row['Export']:.1f} tỷ USD, điểm ưu tiên {row['Priority_Score']:.4f},
+        nhu cầu đào tạo lại proxy {row['Retraining_Need']:.2f} triệu lao động.<br><br>
+        <b>2. Chẩn đoán chính sách:</b> {diagnosis}<br><br>
+        <b>3. Hành động ưu tiên:</b><ul>{actions}</ul>
+        <b>4. Đánh đổi cần lưu ý:</b> {sector_tradeoff(row).replace("Đánh đổi cần lưu ý là ", "")}<br><br>
+        <b>5. Nguồn dữ liệu:</b> {SECTORS_CSV}; năm dữ liệu 2024; đơn vị gồm %, triệu lao động, tỷ USD và thang 0-100.
+        """,
+        "🏭",
+    )
 
 
 def sector_outputs() -> pd.DataFrame:
@@ -310,6 +477,7 @@ def sector_outputs() -> pd.DataFrame:
         - 0.15 * df["Risk_norm"]
     )
     df["Labor_Vulnerability"] = 0.60 * df["Labor_norm"] + 0.40 * df["Risk_norm"]
+    df["Retraining_Need"] = df["Labor"] * df["Automation_Risk"] / 100
     df["Policy_Group"] = df.apply(assign_policy_group, axis=1)
     df["Policy_Recommendation"] = df.apply(policy_recommendation, axis=1)
     out = df.sort_values("Priority_Score", ascending=False).reset_index(drop=True)
@@ -320,11 +488,11 @@ def sector_outputs() -> pd.DataFrame:
 def simulate_labor(allocation: np.ndarray, sector_df: pd.DataFrame | None = None) -> pd.DataFrame:
     if sector_df is None:
         sector_df = sector_outputs()
-    base = SECTOR_DF.copy()
+    base = sector_df.copy()
     risk = base["Automation_Risk"].values / 100
-    a1 = np.array([8.5, 32.5, 12.8, 22.4, 45.8, 28.5, 62.5, 18.5, 20.0])
-    b1 = np.array([45.0, 28.0, 35.0, 32.0, 22.0, 30.0, 20.0, 55.0, 40.0])
-    c1 = np.array([5.2, 62.4, 18.5, 48.2, 72.5, 42.8, 32.5, 12.5, 15.0])
+    a1 = (base["AI_Readiness"] * (0.55 + base["Spillover"])).to_numpy()
+    b1 = ((100 - base["AI_Readiness"]) * base["Labor"].clip(lower=0.1)).to_numpy()
+    c1 = (base["Labor"] * (0.5 + base["Automation_Risk"] / 100) * 20).to_numpy()
 
     labor_budget = 30000
     x_ai_total = allocation[2] * labor_budget
@@ -465,6 +633,7 @@ def show() -> None:
     tabs = st.tabs(
         [
             "🌸 Tổng quan & S1-S5",
+            "📚 Dữ liệu & Nguồn",
             "📈 M1 Vĩ mô",
             "🌍 M2 Vùng",
             "💰 M3 Ngân sách",
@@ -484,7 +653,7 @@ def show() -> None:
             các đánh đổi giữa tăng trưởng, việc làm, rủi ro, chuyển đổi số, AI và nhân lực số.
 
             Hệ thống tích hợp 6 module: **M1** dự báo kinh tế vĩ mô, **M2** đánh giá sẵn sàng số theo vùng,
-            **M3** mô phỏng phân bổ ngân sách, **M4** chính sách theo 9 ngành, **M5** lao động và rủi ro,
+            **M3** mô phỏng phân bổ ngân sách, **M4** chính sách theo dữ liệu ngành, **M5** lao động và rủi ro,
             **M6** AIDEOM Score và bảng hỗ trợ ra quyết định.
             """
         )
@@ -495,6 +664,7 @@ def show() -> None:
             alloc_df.style.format({"K": "{:.0%}", "D": "{:.0%}", "AI": "{:.0%}", "H": "{:.0%}"}),
             use_container_width=True,
         )
+        source_caption("Bộ kịch bản mô phỏng S1-S5", "Tỷ trọng ngân sách (%)", "Kịch bản mô phỏng")
 
         selected_code = st.selectbox(
             "Chọn kịch bản để đọc nhanh cơ cấu phân bổ",
@@ -525,6 +695,7 @@ def show() -> None:
             )
             fig_alloc.update_layout(barmode="stack", yaxis_title="Tỷ trọng ngân sách (%)", xaxis_title="")
             st.plotly_chart(fig_alloc, use_container_width=True)
+            source_caption("Bộ kịch bản mô phỏng S1-S5", "Tỷ trọng ngân sách (%)", "Kịch bản mô phỏng")
         with c2:
             fig_donut = px.pie(
                 selected_alloc,
@@ -535,6 +706,7 @@ def show() -> None:
                 color_discrete_sequence=COLORS,
             )
             st.plotly_chart(fig_donut, use_container_width=True)
+            source_caption("Bộ kịch bản mô phỏng S1-S5", "Tỷ trọng ngân sách (%)", "Kịch bản mô phỏng")
         result_note(
             "Nhận xét kịch bản hiện tại",
             f"Kịch bản {selected['name']} phân bổ cao nhất cho {selected_alloc.loc[selected_alloc['Tỷ trọng'].idxmax(), 'Cấu phần']} với {selected_alloc['Tỷ trọng'].max():.0f}%.",
@@ -543,6 +715,9 @@ def show() -> None:
         )
 
     with tabs[1]:
+        render_data_sources_tab()
+
+    with tabs[2]:
         section("M1 — Dự báo kinh tế vĩ mô 2026-2030", "📈")
         st.dataframe(
             macro_summary.style.format(
@@ -557,6 +732,7 @@ def show() -> None:
             ),
             use_container_width=True,
         )
+        source_caption(MACRO_CSV, "Chỉ số mô phỏng từ nền vĩ mô", "2020-2025 nền; dự báo mô phỏng 2026-2030")
         fig_macro = go.Figure()
         for code, df_s in macro_results.items():
             fig_macro.add_trace(
@@ -574,6 +750,7 @@ def show() -> None:
             legend_title="Kịch bản",
         )
         st.plotly_chart(fig_macro, use_container_width=True)
+        source_caption(MACRO_CSV, "GDP dự báo theo mô hình", "2026-2030")
         gdp_top = macro_summary.sort_values("GDP 2030", ascending=False).iloc[0]
         gdp_low = macro_summary.sort_values("GDP 2030").iloc[0]
         result_note(
@@ -583,13 +760,14 @@ def show() -> None:
             "Các kịch bản tăng mạnh AI hoặc vốn truyền thống thường cải thiện GDP nhanh hơn, nhưng cần đối chiếu với M5 để xem rủi ro đi kèm.",
         )
 
-    with tabs[2]:
+    with tabs[3]:
         section("M2 — Đánh giá sẵn sàng số theo vùng", "🌍")
         region_cols = ["Rank", "Vùng", "Digital_Index", "AI_Readiness", "Internet", "Labor_Trained", "Gini", "Regional_Readiness"]
         st.dataframe(
             regions_rank[region_cols].style.format({"Regional_Readiness": "{:.4f}", "Gini": "{:.3f}"}),
             use_container_width=True,
         )
+        source_caption(REGIONS_CSV, "Thang 0-100, %, hệ số Gini", "2024")
         fig_region = px.bar(
             regions_rank,
             x="Regional_Readiness",
@@ -601,6 +779,7 @@ def show() -> None:
         )
         fig_region.update_layout(yaxis={"categoryorder": "total ascending"}, xaxis_title="Regional Readiness Score")
         st.plotly_chart(fig_region, use_container_width=True)
+        source_caption(REGIONS_CSV, "Regional Readiness Score", "2024")
         top_region = regions_rank.iloc[0]
         low_region = regions_rank.iloc[-1]
         result_note(
@@ -610,13 +789,14 @@ def show() -> None:
             "Hàm ý chính sách là cần phân tầng đầu tư theo năng lực nền: vùng dẫn đầu nên được dùng làm cực tăng trưởng, vùng thấp cần gói bao trùm số và đào tạo nhân lực số.",
         )
 
-    with tabs[3]:
+    with tabs[4]:
         section("M3 — Phân bổ ngân sách theo kịch bản", "💰")
         st.caption("Tổng ngân sách mô phỏng: 50.000 tỷ.")
         st.dataframe(
             budget_df.style.format({"K": "{:,.0f}", "D": "{:,.0f}", "AI": "{:,.0f}", "H": "{:,.0f}", "Tổng": "{:,.0f}"}),
             use_container_width=True,
         )
+        source_caption("Bộ kịch bản mô phỏng S1-S5", "Tỷ VND", "Kịch bản mô phỏng")
         budget_plot = budget_df.melt(
             id_vars=["Mã", "Kịch bản", "Tổng"],
             value_vars=["K", "D", "AI", "H"],
@@ -633,6 +813,7 @@ def show() -> None:
         )
         fig_budget.update_layout(barmode="stack", xaxis_title="", yaxis_title="Tỷ VND")
         st.plotly_chart(fig_budget, use_container_width=True)
+        source_caption("Bộ kịch bản mô phỏng S1-S5", "Tỷ VND", "Kịch bản mô phỏng")
         s3_ai = budget_df.loc[budget_df["Mã"] == "S3", "AI"].iloc[0]
         s4_h = budget_df.loc[budget_df["Mã"] == "S4", "H"].iloc[0]
         result_note(
@@ -642,63 +823,99 @@ def show() -> None:
             "Trade-off cốt lõi nằm ở việc chọn tốc độ công nghệ hay mức bao trùm xã hội: tăng AI nhanh có thể kéo năng lực công nghệ, nhưng nếu H thấp thì rủi ro lao động và an ninh dữ liệu sẽ tăng.",
         )
 
-    with tabs[4]:
-        section("M4 — 9 ngành chiến lược và chính sách riêng", "🏭")
+    with tabs[5]:
+        section("M4 — Ngành chiến lược và chính sách riêng", "🏭")
+        sector_policy_df = sector_rank.merge(
+            labor_detail[best["Mã"]][["Ngành", "NetJob"]],
+            on="Ngành",
+            how="left",
+        )
+        sector_policy_df["Nhu cầu đào tạo lại"] = sector_policy_df["Retraining_Need"]
+        sector_display = sector_policy_df.rename(
+            columns={
+                "Priority_Score": "Điểm ưu tiên",
+                "Growth": "Tăng trưởng",
+                "Labor": "Việc làm",
+                "Policy_Group": "Nhóm chính sách",
+                "Policy_Recommendation": "Khuyến nghị chính",
+            }
+        )
         sector_cols = [
-            "Rank",
             "Ngành",
-            "Growth",
-            "Productivity",
-            "Spillover",
-            "Export",
-            "Labor",
+            "Điểm ưu tiên",
             "AI_Readiness",
             "Automation_Risk",
-            "Priority_Score",
-            "Labor_Vulnerability",
-            "Policy_Group",
-            "Policy_Recommendation",
+            "Tăng trưởng",
+            "Việc làm",
+            "NetJob",
+            "Nhu cầu đào tạo lại",
+            "Nhóm chính sách",
+            "Khuyến nghị chính",
         ]
         st.dataframe(
-            sector_rank[sector_cols].style.format(
+            sector_display[sector_cols].style.format(
                 {
-                    "Growth": "{:.2f}",
-                    "Productivity": "{:,.1f}",
-                    "Spillover": "{:.2f}",
-                    "Export": "{:,.1f}",
-                    "Labor": "{:.2f}",
-                    "Priority_Score": "{:.4f}",
-                    "Labor_Vulnerability": "{:.4f}",
+                    "Điểm ưu tiên": "{:.4f}",
+                    "AI_Readiness": "{:.0f}",
+                    "Automation_Risk": "{:.1f}",
+                    "Tăng trưởng": "{:.2f}",
+                    "Việc làm": "{:.2f}",
+                    "NetJob": "{:,.1f}",
+                    "Nhu cầu đào tạo lại": "{:.2f}",
                 }
             ),
             use_container_width=True,
         )
+        source_caption(SECTORS_CSV, "%, triệu lao động, tỷ USD, điểm chuẩn hóa", "2024; NetJob theo kịch bản AIDEOM dẫn đầu")
         col_a, col_b = st.columns(2)
         with col_a:
             fig_sector = px.bar(
-                sector_rank,
+                sector_policy_df,
                 x="Priority_Score",
                 y="Ngành",
                 orientation="h",
-                title="M4 - Xếp hạng ưu tiên chính sách theo 9 ngành",
+                title="M4 - Xếp hạng điểm ưu tiên ngành",
                 color="Priority_Score",
                 color_continuous_scale=["#F9A8D4", "#67E8F9", "#A78BFA"],
             )
             fig_sector.update_layout(yaxis={"categoryorder": "total ascending"}, xaxis_title="Priority Score")
             st.plotly_chart(fig_sector, use_container_width=True)
+            source_caption(SECTORS_CSV, "Priority Score", "2024")
         with col_b:
-            fig_scatter = px.scatter(
-                sector_rank,
-                x="AI_Readiness",
-                y="Automation_Risk",
-                size="Labor",
-                color="Policy_Group",
-                hover_name="Ngành",
-                title="AI Readiness vs Automation Risk",
-                color_discrete_sequence=COLORS,
+            fig_netjob_sector = px.bar(
+                sector_policy_df.sort_values("NetJob", ascending=True),
+                x="NetJob",
+                y="Ngành",
+                orientation="h",
+                title=f"NetJob theo ngành — {best['Mã']}",
+                color="NetJob",
+                color_continuous_scale=["#F9A8D4", "#86EFAC", "#67E8F9"],
             )
-            fig_scatter.update_layout(xaxis_title="AI Readiness", yaxis_title="Automation Risk (%)")
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            fig_netjob_sector.update_layout(xaxis_title="NetJob", yaxis_title="")
+            st.plotly_chart(fig_netjob_sector, use_container_width=True)
+            source_caption(f"{SECTORS_CSV}; mô phỏng M5", "Việc làm ròng", f"2024 nền; kịch bản {best['Mã']}")
+        fig_scatter = px.scatter(
+            sector_policy_df,
+            x="AI_Readiness",
+            y="Automation_Risk",
+            size="Labor",
+            color="Policy_Group",
+            text="Ngành",
+            hover_name="Ngành",
+            title="AI Readiness vs Automation Risk theo quy mô lao động",
+            color_discrete_sequence=COLORS,
+        )
+        fig_scatter.update_traces(textposition="top center")
+        fig_scatter.update_layout(xaxis_title="AI Readiness", yaxis_title="Automation Risk (%)")
+        st.plotly_chart(fig_scatter, use_container_width=True)
+        source_caption(SECTORS_CSV, "AI Readiness 0-100, Automation Risk %, lao động triệu người", "2024")
+        selected_sector = st.selectbox(
+            "Chọn ngành để xem policy card",
+            sector_policy_df["Ngành"].tolist(),
+            key="b12_sector_policy_select",
+        )
+        selected_sector_row = sector_policy_df.loc[sector_policy_df["Ngành"] == selected_sector].iloc[0]
+        render_sector_policy_card(selected_sector_row)
         result_note(
             "Nhận xét M4",
             f"Ngành ưu tiên cao nhất là {top_sector['Ngành']} với Priority Score = {top_sector['Priority_Score']:.4f}.",
@@ -711,7 +928,7 @@ def show() -> None:
             rec = group_df["Policy_Recommendation"].iloc[0]
             policy_card(group, f"<b>Ngành thuộc nhóm:</b> {names}.<br><b>Khuyến nghị:</b> {rec}", "🍬")
 
-    with tabs[5]:
+    with tabs[6]:
         section("M5 — NetJob và rủi ro theo kịch bản", "⚠️")
         st.dataframe(
             labor_risk_df.style.format(
@@ -728,6 +945,7 @@ def show() -> None:
             ),
             use_container_width=True,
         )
+        source_caption(f"{SECTORS_CSV}; bộ kịch bản S1-S5", "Việc làm mô phỏng, risk score", "2024 nền; mô phỏng theo kịch bản")
         col_jobs, col_risk = st.columns(2)
         with col_jobs:
             fig_jobs = px.bar(
@@ -740,6 +958,7 @@ def show() -> None:
             )
             fig_jobs.update_layout(xaxis_title="", yaxis_title="Việc làm ròng")
             st.plotly_chart(fig_jobs, use_container_width=True)
+            source_caption(f"{SECTORS_CSV}; mô phỏng M5", "Việc làm ròng", "2024 nền; mô phỏng theo kịch bản")
         with col_risk:
             risk_plot = labor_risk_df.melt(
                 id_vars=["Mã", "Kịch bản"],
@@ -758,6 +977,7 @@ def show() -> None:
             )
             fig_risk.update_layout(xaxis_title="", yaxis_title="Risk score")
             st.plotly_chart(fig_risk, use_container_width=True)
+            source_caption("Bộ kịch bản S1-S5; hệ số mô phỏng rủi ro", "Risk score", "Kịch bản mô phỏng")
         job_top = labor_risk_df.sort_values("Total NetJob", ascending=False).iloc[0]
         risk_top = labor_risk_df.sort_values("Total Risk", ascending=False).iloc[0]
         result_note(
@@ -780,8 +1000,9 @@ def show() -> None:
             ),
             use_container_width=True,
         )
+        source_caption(f"{SECTORS_CSV}; mô phỏng M5", "Việc làm theo ngành", f"2024 nền; kịch bản {selected_labor}")
 
-    with tabs[6]:
+    with tabs[7]:
         section("M6 — AIDEOM Score và bảng ra quyết định", "🏆")
         score_cols = ["Rank", "Mã", "Kịch bản", "GDP 2030", "Total NetJob", "Total Risk", "GDP_norm", "NetJob_norm", "Risk_norm", "AIDEOM_Score"]
         st.dataframe(
@@ -798,6 +1019,7 @@ def show() -> None:
             ),
             use_container_width=True,
         )
+        source_caption(f"{MACRO_CSV}; {SECTORS_CSV}; bộ kịch bản S1-S5", "Điểm chuẩn hóa và risk score", "2024-2025 nền; mô phỏng 2026-2030")
         col_score, col_norm = st.columns(2)
         with col_score:
             fig_score = px.bar(
@@ -811,6 +1033,7 @@ def show() -> None:
             )
             fig_score.update_layout(yaxis={"categoryorder": "total ascending"}, xaxis_title="AIDEOM Score")
             st.plotly_chart(fig_score, use_container_width=True)
+            source_caption("Kết quả mô phỏng M1, M5, M6", "AIDEOM Score", "Mô phỏng 2026-2030")
         with col_norm:
             norm_plot = score_rank.melt(
                 id_vars=["Mã", "Kịch bản"],
@@ -829,6 +1052,7 @@ def show() -> None:
             )
             fig_norm.update_layout(xaxis_title="", yaxis_title="Điểm chuẩn hóa")
             st.plotly_chart(fig_norm, use_container_width=True)
+            source_caption("Kết quả mô phỏng M1, M5, M6", "Điểm chuẩn hóa", "Mô phỏng 2026-2030")
         result_note(
             "Nhận xét M6",
             f"Kịch bản tốt nhất theo AIDEOM Score là {best['Kịch bản']} với điểm {best['AIDEOM_Score']:.4f}.",
@@ -839,7 +1063,7 @@ def show() -> None:
         for warning in warning_rows(score_rank):
             policy_card("Cảnh báo rủi ro tự động", warning, "🚨")
 
-    with tabs[7]:
+    with tabs[8]:
         section("AI Policy Agent", "🤖")
         st.caption("Bấm nút bên dưới để hiển thị phân tích chính sách mô phỏng dựa trên kết quả hiện tại.")
         state_key = "b12_policy_agent_visible"
@@ -865,6 +1089,21 @@ def show() -> None:
                 "Bấm nút <b>Phân tích bằng AI Agent</b> để hiển thị nhận xét dựa trên best scenario, highest GDP, highest NetJob, lowest Risk, top sector và high-risk sector.",
                 "🧁",
             )
+
+        section("Hàm ý chính sách nâng cấp", "📋")
+        policy_card(
+            "Kết quả nổi bật và khuyến nghị tích hợp",
+            f"""
+            <b>Kết quả nổi bật.</b> Kịch bản dẫn đầu là <b>{best['Kịch bản']}</b> với AIDEOM Score = <b>{best['AIDEOM_Score']:.4f}</b>;
+            GDP cao nhất thuộc về <b>{highest_gdp['Kịch bản']}</b> với <b>{highest_gdp['GDP 2030']:,.2f}</b>;
+            NetJob cao nhất thuộc về <b>{highest_jobs['Kịch bản']}</b> với <b>{highest_jobs['Total NetJob']:,.0f}</b>;
+            ngành ưu tiên cao nhất là <b>{top_sector['Ngành']}</b> với Priority Score = <b>{top_sector['Priority_Score']:.4f}</b>.<br><br>
+            <b>Liên hệ chính sách Việt Nam.</b> Kết quả gắn với <b>Nghị quyết 57-NQ/TW</b>, <b>Quyết định 749/QĐ-TTg</b>, <b>Quyết định 411/QĐ-TTg</b> và <b>Quyết định 127/QĐ-TTg</b>: AIDEOM-VN dùng dữ liệu để cân bằng tăng trưởng số, AI, nhân lực và rủi ro khi lựa chọn kịch bản.<br><br>
+            <b>Đánh đổi cần lưu ý:</b> tăng trưởng, NetJob và rủi ro dữ liệu không cùng tối ưu trong một kịch bản; đẩy nhanh AI cần đi cùng đào tạo lại và quản trị an toàn.<br><br>
+            <b>Khuyến nghị hành động.</b> Dùng <b>{best['Mã']}</b> làm kịch bản cơ sở; theo dõi ngành <b>{top_sector['Ngành']}</b> như mũi nhọn lan tỏa; bổ sung đào tạo lại cho ngành rủi ro cao <b>{high_risk_sector['Ngành']}</b>; cập nhật dữ liệu vùng-ngành hằng năm trước khi điều chỉnh trọng số AIDEOM Score.
+            """,
+            "📋",
+        )
 
         section("Câu hỏi thảo luận chính sách tích hợp", "📈")
         policy_card(
@@ -913,7 +1152,7 @@ def show() -> None:
             """
             Bài 12 đã xây dựng nguyên mẫu **AIDEOM-VN Policy Lab**, tích hợp các kỹ thuật từ Bài 1 đến Bài 11
             thành một hệ thống hỗ trợ ra quyết định. Hệ thống gồm M1 dự báo kinh tế vĩ mô, M2 đánh giá sẵn sàng số,
-            M3 phân bổ ngân sách, M4 chính sách theo 9 ngành, M5 lao động và rủi ro, M6 AIDEOM Score và AI Policy Agent.
+            M3 phân bổ ngân sách, M4 chính sách theo dữ liệu ngành, M5 lao động và rủi ro, M6 AIDEOM Score và AI Policy Agent.
 
             Điểm mạnh của AIDEOM-VN là không tạo ra một đáp án duy nhất, mà cho phép so sánh kịch bản,
             nhận diện đánh đổi, xác định ngành ưu tiên, cảnh báo rủi ro và đưa ra khuyến nghị chính sách.

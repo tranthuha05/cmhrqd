@@ -341,6 +341,20 @@ def show():
         Các nghiệm biên chỉ nên dùng làm benchmark để hiểu chi phí cơ hội.
         Khi triển khai thực tế, cần bổ sung tiêu chí hấp thụ vốn, năng lực địa phương và lộ trình giải ngân.
         """)
+        if res is not None and res.F is not None:
+            max_gdp_idx = int(np.argmax(gdp_gain))
+            min_emission_idx = int(np.argmin(emission))
+            min_ineq_idx = int(np.argmin(inequality))
+            section("4. Hàm ý chính sách nâng cấp", "📋")
+            st.markdown(f"""
+**Kết quả nổi bật.** Tập Pareto có **{len(df_pareto)}** nghiệm; nghiệm GDP cao nhất là **{df_pareto.iloc[max_gdp_idx]['Giải pháp ID']}** với GDP gain **{gdp_gain[max_gdp_idx]:,.1f}**; nghiệm phát thải thấp nhất là **{df_pareto.iloc[min_emission_idx]['Giải pháp ID']}** với emission **{emission[min_emission_idx]:,.1f}**; nghiệm công bằng nhất là **{df_pareto.iloc[min_ineq_idx]['Giải pháp ID']}** với MAD **{inequality[min_ineq_idx]:,.2f}**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả phù hợp với **Nghị quyết 57-NQ/TW** khi chính sách AI/chuyển đổi số cần tối ưu đa mục tiêu, đồng thời liên quan **Quyết định 749/QĐ-TTg** về chuyển đổi số bao trùm.
+
+**Đánh đổi cần lưu ý:** hiệu quả kinh tế, công bằng vùng, phát thải và rủi ro dữ liệu không thể đồng thời đạt cực trị.
+
+**Khuyến nghị hành động.** Không chọn nghiệm biên cực đoan; chọn vùng giữa Pareto làm phương án cơ sở; dùng nghiệm GDP cao nhất và phát thải thấp nhất làm benchmark; bổ sung tiêu chí hấp thụ vốn địa phương trước khi phân bổ ngân sách thật.
+            """)
 
     # ══ Tab 5: AI Agent ═══════════════════════════════════════════════════
     with tabs[4]:

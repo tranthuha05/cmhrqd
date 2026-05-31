@@ -361,6 +361,15 @@ sang tăng trưởng dựa trên **năng suất, công nghệ và đổi mới s
 Đầu tư vào hạ tầng số, AI và nhân lực số cần được xem là nhóm **chính sách trung tâm**
 trong chiến lược phát triển kinh tế giai đoạn tới, không phải là chi phụ trợ.
         """)
+        st.markdown(f"""
+**Kết quả nổi bật.** TFP {tfp_trend} từ **{A[0]:.4f}** lên **{A[-1]:.4f}**; tăng trưởng GDP bình quân theo log là **{avg_g*100:.2f}%/năm**; nhóm yếu tố mới đóng góp mạnh nhất là **{top_new}** với **{share[top_new]:.2f}%**; tỷ trọng kinh tế số tăng từ **{D[0]:.1f}%** lên **{D[-1]:.1f}%**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả phù hợp với **Nghị quyết 57-NQ/TW** về khoa học, công nghệ, đổi mới sáng tạo và chuyển đổi số; đồng thời gắn với **Quyết định 749/QĐ-TTg** khi D và AI trở thành cấu phần tăng trưởng cần theo dõi định lượng.
+
+**Đánh đổi cần lưu ý:** tăng tốc GDP bằng công nghệ phải đi cùng nâng chất lượng nhân lực số, nếu không phần tăng trưởng do AI/D có thể tập trung vào nhóm doanh nghiệp và vùng có năng lực hấp thụ cao.
+
+**Khuyến nghị hành động.** Ưu tiên tăng đầu tư hạ tầng dữ liệu và AI ở các ngành có đóng góp D/AI lớn; theo dõi TFP, tỷ trọng kinh tế số/GDP và năng lực AI hằng năm; gắn mục tiêu 30% kinh tế số với chương trình đào tạo nhân lực số; hỗ trợ SME chuyển đổi số để tăng khả năng lan tỏa năng suất.
+        """)
 
         section("5. Kết luận", "✅")
         st.success(f"""

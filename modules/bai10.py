@@ -353,6 +353,16 @@ def show() -> None:
         Cách tiếp cận này thường thận trọng hơn SP, nhưng có thể hy sinh một phần hiệu quả trung bình.
         Chính sách Việt Nam nên dùng SP cho kế hoạch cơ sở và robust regret như kiểm tra sức chịu đựng trước cú sốc.
         """)
+        section("4. Hàm ý chính sách nâng cấp", "📋")
+        st.markdown(f"""
+**Kết quả nổi bật.** Giá trị RP đạt **{metrics['RP']:,.4f}**; VSS = **{metrics['VSS']:,.4f}**; EVPI = **{metrics['EVPI']:,.4f}**; phân bổ H trong SP là **{sp_H:,.4f}** so với EV **{ev_H:,.4f}**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả phù hợp với **Quyết định 749/QĐ-TTg** và **Quyết định 411/QĐ-TTg**: quyết định đầu tư số cần tính bất định vĩ mô, dữ liệu thời gian thực và giá trị thông tin.
+
+**Đánh đổi cần lưu ý:** tối ưu kỳ vọng và khả năng chống chịu; nghiệm robust an toàn hơn nhưng có thể hy sinh hiệu quả trung bình.
+
+**Khuyến nghị hành động.** Dùng nghiệm SP làm kế hoạch ngân sách cơ sở; dùng EVPI để xác định mức đầu tư tối đa cho dự báo và dữ liệu sớm; kiểm tra robust regret trước cú sốc xấu; nếu SP tăng H, giữ ngân sách nhân lực số như lớp bảo hiểm chính sách.
+        """)
 
     with tabs[4]:
         sp_H, ev_H = sp_solution["x"]["H"], ev_solution["x"]["H"]

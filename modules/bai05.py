@@ -343,6 +343,21 @@ def show():
         Tuy nhiên, nới ngân sách chỉ có ý nghĩa nếu năng lực giải ngân 2 năm đầu và ràng buộc tiên quyết nhân lực không trở thành nút thắt mới.
         Chính sách nên đi kèm kế hoạch triển khai theo giai đoạn để tránh chọn danh mục lớn nhưng không giải ngân được.
         """)
+        if res["success"]:
+            selected_count = len(df_sel_only)
+            total_cost_selected = df_sel_only["Chi phí tổng C (tỷ)"].sum()
+            early_cost_selected = df_sel_only["Chi phí Năm 1-2"].sum()
+            best_eff_project = df_sel_only.sort_values("Hiệu suất (NPV/C)", ascending=False).iloc[0]
+            section("4. Hàm ý chính sách nâng cấp", "📋")
+            st.markdown(f"""
+**Kết quả nổi bật.** Danh mục tối ưu chọn **{selected_count}** dự án; tổng NPV đạt **{res['total_npv']:,.0f} tỷ VND**; tổng chi phí được chọn là **{total_cost_selected:,.0f} tỷ VND**; chi phí năm 1-2 là **{early_cost_selected:,.0f} tỷ VND**; dự án hiệu suất cao nhất trong danh mục là **{best_eff_project['Mã']}** với NPV/C = **{best_eff_project['Hiệu suất (NPV/C)']:.2f}**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả phù hợp với **Nghị quyết 57-NQ/TW** và **Quyết định 127/QĐ-TTg**: danh mục AI, bán dẫn, dữ liệu và an ninh mạng cần được chọn theo ràng buộc triển khai, không chỉ theo lợi ích danh nghĩa.
+
+**Đánh đổi cần lưu ý:** hiệu quả kinh tế và an ninh dữ liệu; dự án bảo đảm an toàn hệ thống có thể không có NPV/C cao nhất nhưng là điều kiện để triển khai AI quy mô lớn.
+
+**Khuyến nghị hành động.** Giữ ràng buộc tiên quyết cho đào tạo AI/bán dẫn; theo dõi chi phí năm 1-2 để tránh nghẽn giải ngân; chỉ nới ngân sách khi danh mục mới tăng NPV đủ lớn; không chọn đồng thời các trung tâm dữ liệu trùng chức năng nếu ràng buộc loại trừ đang hoạt động.
+            """)
 
     # ══ Tab 5: AI Agent ═══════════════════════════════════════════════════
     with tabs[4]:

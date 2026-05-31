@@ -345,6 +345,22 @@ def show():
         Những cấu phần có tính lũy kế như nhân lực số và hạ tầng số giúp nền kinh tế phục hồi tốt hơn sau cú sốc.
         Chính sách nên duy trì ngân sách số tối thiểu ngay cả trong giai đoạn suy giảm để tránh mất động lực dài hạn.
         """)
+        if res_opt.success:
+            s_policy = res_opt.x.reshape(T, 4)
+            mean_ai = s_policy[:, 2].mean() * 100
+            mean_h = s_policy[:, 3].mean() * 100
+            early_mean = s_policy[:3].sum(axis=1).mean() * 100
+            late_mean = s_policy[-3:].sum(axis=1).mean() * 100
+            section("4. Hàm ý chính sách nâng cấp", "📋")
+            st.markdown(f"""
+**Kết quả nổi bật.** Phúc lợi tối ưu W* = **{sim_opt['welfare']:.4f}**; GDP cuối kỳ 2035 đạt **{sim_opt['Y'][-1]:,.1f} tỷ VND**; tỷ trọng AI trung bình là **{mean_ai:.2f}%** và nhân lực số H là **{mean_h:.2f}%**; cường độ đầu tư 3 năm đầu là **{early_mean:.2f}%**, so với 3 năm cuối **{late_mean:.2f}%**.
+
+**Liên hệ chính sách Việt Nam.** Kết quả liên quan **Nghị quyết 57-NQ/TW** và **Quyết định 127/QĐ-TTg**: năng lực AI cần đầu tư liên tục, nhưng H là tài sản chống chịu trước cú sốc.
+
+**Đánh đổi cần lưu ý:** đầu tư sớm và tiêu dùng ngắn hạn; front-load giúp tăng năng lực dài hạn nhưng đòi hỏi năng lực giải ngân và giám sát dự án.
+
+**Khuyến nghị hành động.** Duy trì tỷ lệ đầu tư tối thiểu vào H trong 2026-2028; không cắt ngân sách hạ tầng/nhân lực số khi có cú sốc; theo dõi GDP, TFP và mức khấu hao AI; chỉ tăng tốc AI khi có kế hoạch duy trì vốn công nghệ sau đầu tư ban đầu.
+            """)
 
     # ══ Tab 5: AI Agent ═══════════════════════════════════════════════════
     with tabs[4]:
